@@ -1,0 +1,7 @@
+export org.morecup.jimmerddd.core.domain.goods.Goods
+    -> package org.morecup.jimmerddd.core.domain.goods.dto
+
+input CreateGoodsCmd {
+    #allScalars(this)
+}
+

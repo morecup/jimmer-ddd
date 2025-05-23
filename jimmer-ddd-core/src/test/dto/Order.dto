@@ -1,0 +1,8 @@
+
+export org.morecup.jimmerddd.core.domain.order.Order
+    -> package org.morecup.jimmerddd.core.domain.order.dto
+
+input CreateOrderCmd {
+    #allScalars(this)
+}
+
