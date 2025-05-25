@@ -6,21 +6,26 @@ import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.objectweb.asm.Type
 import kotlin.collections.plus
+import java.util.concurrent.ConcurrentHashMap
+
+private val analysisMethodFetcherCache: MutableMap<MethodInfo, FetcherImplementor<*>> = ConcurrentHashMap()
 
 fun <T : Any> analysisMethodFetcher(entityClazz: Class<T>, methodInfo: MethodInfo): FetcherImplementor<T> {
-    val fetcherImpl: FetcherImpl<T> = FetcherImpl(entityClazz)
-    val analyzeMethods: MutableSet<MethodInfo> = ClassMethodAnalyzer.analyzeMethods(methodInfo)
-    val neededGetFieldNameSet = analyzeMethods.filter {
+    return analysisMethodFetcherCache.computeIfAbsent(methodInfo) { t ->
+        val fetcherImpl: FetcherImpl<T> = FetcherImpl(entityClazz)
+        val analyzeMethods: MutableSet<MethodInfo> = ClassMethodAnalyzer.analyzeMethods(t)
+        val neededGetFieldNameSet = analyzeMethods.filter {
 //        it.ownerClass == function.javaMethod?.declaringClass?.name&&
-                it.desc.startsWith("()")&&
-                it.desc!="()Z" }.map {
-                    if (it.ownerClass.endsWith("Draft")){ it.ownerClass = it.ownerClass.substring(0, it.ownerClass.length - "Draft".length)}
-                    if (it.name.startsWith("get")){ it.name = it.name.substring(3).replaceFirstChar { it.lowercase() }}
-                    if (it.desc.endsWith("Draft;")){ it.desc = it.desc.substring(0, it.desc.length - "Draft;".length) + ";"}
-                    it
-                }.toHashSet()
+            it.desc.startsWith("()")&&
+                    it.desc!="()Z" }.map {
+            if (it.ownerClass.endsWith("Draft")){ it.ownerClass = it.ownerClass.substring(0, it.ownerClass.length - "Draft".length)}
+            if (it.name.startsWith("get")){ it.name = it.name.substring(3).replaceFirstChar { it.lowercase() }}
+            if (it.desc.endsWith("Draft;")){ it.desc = it.desc.substring(0, it.desc.length - "Draft;".length) + ";"}
+            it
+        }.toHashSet()
 
-    return asmMethodInfoToFetcher(fetcherImpl, neededGetFieldNameSet)
+        asmMethodInfoToFetcher(fetcherImpl, neededGetFieldNameSet)
+    } as FetcherImplementor<T>
 }
 
 private fun <T> asmMethodInfoToFetcher(baseFetcher:FetcherImplementor<T>, methodInfoSet: HashSet<MethodInfo>, loadedClassList:List<Class<*>> = arrayListOf()): FetcherImplementor<T> {
