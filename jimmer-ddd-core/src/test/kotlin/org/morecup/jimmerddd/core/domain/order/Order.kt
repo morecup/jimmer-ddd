@@ -1,9 +1,8 @@
 package org.morecup.jimmerddd.core.domain.order
 
-import cn.hutool.poi.excel.sax.AttributeName.t
-import com.fasterxml.jackson.databind.util.ClassUtil.name
 import org.morecup.jimmerddd.core.domain.BaseEntity
 import org.babyfish.jimmer.sql.Entity
+import org.babyfish.jimmer.sql.IdView
 import org.babyfish.jimmer.sql.ManyToMany
 import org.babyfish.jimmer.sql.ManyToOne
 import org.babyfish.jimmer.sql.OneToMany
@@ -11,6 +10,8 @@ import org.babyfish.jimmer.sql.OneToOne
 import org.babyfish.jimmer.sql.Table
 import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
+import org.morecup.jimmerddd.core.annotation.AggregatedField
+import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy
 import org.morecup.jimmerddd.core.domain.DomainEvent
 import org.morecup.jimmerddd.core.domain.DomainRegistry.goodsFactory
@@ -37,6 +38,9 @@ interface Order : BaseEntity {
     @ManyToMany(mappedBy = "orderList")
     val giftList:List<Gift>
 
+    @IdView("giftList")
+    val giftListIds:List<Long>
+
     // 一对一：订单与支付单（mappedBy 指向 Payment.order）
     @OneToOne(mappedBy = "order")
     val payment: Payment?
@@ -48,7 +52,13 @@ interface Order : BaseEntity {
     @OneToOne
     val orderDetail: OrderDetail
 
-    val goodsId:Long?
+    @OneToOne
+    @AggregatedField(type = AggregationType.NON_AGGREGATED)
+    val goods: Goods?
+
+    @IdView
+//    @Transient
+    val goodsId: Long?
 }
 class OrderUtil {
     companion object {
@@ -125,6 +135,22 @@ class OrderImpl(order: OrderDraft) : OrderDraft by order {
             it.giftName = "新的名称"
         }
         user().userDetail().msg = "test"
+    }
+
+    fun seeIdView(){
+        println(goodsId)
+    }
+
+    fun setIdView(){
+        goodsId = 1924732369399582720L
+    }
+
+    fun seeIdOnly(){
+        println(goods)
+    }
+
+    fun setIdOnly(){
+        goods().id = 1924732201233158144L
     }
 }
 class RenameEvent(

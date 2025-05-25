@@ -3,6 +3,7 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import javafx.beans.binding.Bindings.select
 import org.babyfish.jimmer.meta.TargetLevel
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
@@ -124,6 +125,50 @@ class AggregateProxyTest {
         repository.saveOrder(changedDraft.toAssociatedFixed())
     }
 
+
+    @Test
+    fun testSeeIdView(){
+        val order: Order =
+            sql.findById(analysisMethodFetcher(Order::class.java,MethodInfo(OrderImpl::seeIdView.javaMethod!!)), testOrderId)!!
+        val (changedDraft,result) = orderAggregateProxy.exec(order) { impl ->
+            OrderImpl(impl).seeIdView()
+        }
+        println(changedDraft)
+        repository.saveOrder(changedDraft.toAssociatedFixed())
+    }
+
+    @Test
+    fun testSetIdView(){
+        val order: Order =
+            sql.findById(analysisMethodFetcher(Order::class.java,MethodInfo(OrderImpl::setIdView.javaMethod!!)), testOrderId)!!
+        val (changedDraft,result) = orderAggregateProxy.exec(order) { impl ->
+            OrderImpl(impl).setIdView()
+        }
+        println(changedDraft)
+        repository.saveOrder(changedDraft.toAssociatedFixed())
+    }
+
+    @Test
+    fun testSeeIdOnly(){
+        val order: Order =
+            sql.findById(analysisMethodFetcher(Order::class.java,MethodInfo(OrderImpl::seeIdOnly.javaMethod!!)), testOrderId)!!
+        val (changedDraft,result) = orderAggregateProxy.exec(order) { impl ->
+            OrderImpl(impl).seeIdOnly()
+        }
+        println(changedDraft)
+        repository.saveOrder(changedDraft.toAssociatedFixed())
+    }
+
+    @Test
+    fun testSetIdOnly(){
+        val order: Order =
+            sql.findById(analysisMethodFetcher(Order::class.java,MethodInfo(OrderImpl::setIdOnly.javaMethod!!)), testOrderId)!!
+        val (changedDraft,result) = orderAggregateProxy.exec(order) { impl ->
+            OrderImpl(impl).setIdOnly()
+        }
+        println(changedDraft)
+        repository.saveOrder(changedDraft.toAssociatedFixed())
+    }
 }
 
 fun String.formatJsonString(): String {

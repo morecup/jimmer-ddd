@@ -10,6 +10,9 @@ import org.morecup.jimmerddd.core.annotation.PrepareLoadMode
 fun <E> FetcherImpl<E>.allAggregationFields(loadedClassList:List<Class<*>> = arrayListOf()):FetcherImplementor<E> {
     var fetcher:FetcherImplementor<E> = this
     for (prop in immutableType.props.values) {
+        if (prop.isTransient && !prop.hasTransientResolver()) {
+            continue
+        }
         val annotations = prop.annotations
         val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
         val lazy = annotations.filterIsInstance<Lazy>().firstOrNull()

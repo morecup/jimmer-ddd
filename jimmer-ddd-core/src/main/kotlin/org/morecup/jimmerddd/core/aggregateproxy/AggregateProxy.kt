@@ -70,7 +70,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
             if (prop.targetType != null){
 
                 val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
-                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED) {
+                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
                     val reloadValue = associationPropReloadValue(spi,prop)
                     val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, reloadValue)
                     propertiesHasSetMap.put(propName,true)
@@ -135,7 +135,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                     try {
                         if (prop.isAssociation(TargetLevel.ENTITY)){
                             val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
-                            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED) {
+                            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
                                 if (!propertiesHasSetMap.getOrDefault(propName, false)) {
                                     val tempDraftValue = tempDraft.__get(propName)
                                     val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
@@ -160,10 +160,8 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
 //                                }else{
 //                                    return@newProxyInstance tempDraft.__get(propName)
 //                                }
-                            }else if (aggregatedField.type == AggregationType.ID_ONLY){
-                                return@newProxyInstance tempDraft.__get(propName)
                             }else if (aggregatedField.type == AggregationType.NON_AGGREGATED){
-                                throw JimmerDDDException("标注不是聚合根的字段，不应该能够加载")
+                                throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
                             }
                         }else{
                             return@newProxyInstance tempDraft.__get(propName)
@@ -192,7 +190,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                                 tempDraft.__set(propName, proxyAssociationDraft)
                                 return@newProxyInstance changedDraft.__set(propName, changedAssociationDraft)
                             }else if (aggregatedField.type == AggregationType.NON_AGGREGATED){
-                                throw JimmerDDDException("标注不是聚合根的字段，不应该能够加载")
+                                throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
                             }
                         }
                         tempDraft.__set(propName, args[0])
