@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    compileOnly(libs.jimmer.sql)
     implementation(project(":jimmer-ddd-core"))
 }
 

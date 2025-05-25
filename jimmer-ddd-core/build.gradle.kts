@@ -3,19 +3,18 @@ plugins {
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
 }
 
-val jimmerVersion: String = "0.2.0-0.9.81"
 
 dependencies {
-    api("io.github.morecup:jimmer-sql-kotlin:${jimmerVersion}")
+    compileOnly(libs.jimmer.sql)
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.ow2.asm:asm-tree:9.8")
     compileOnly("org.slf4j:slf4j-api:2.0.7")
     testImplementation(kotlin("test"))
     testImplementation("cn.hutool:hutool-all:5.8.22")
-    testImplementation("io.github.morecup:jimmer-spring-boot-starter:${jimmerVersion}")
+    testImplementation(libs.jimmer.spring.boot.starter)
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.7.0")
     testRuntimeOnly("mysql:mysql-connector-java:8.0.30")
-    kspTest("io.github.morecup:jimmer-ksp:${jimmerVersion}")
+    kspTest(libs.jimmer.ksp)
 }
 
 tasks.test {
