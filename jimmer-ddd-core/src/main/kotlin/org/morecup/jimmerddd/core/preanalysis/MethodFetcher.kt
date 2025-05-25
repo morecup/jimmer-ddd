@@ -6,13 +6,10 @@ import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.objectweb.asm.Type
 import kotlin.collections.plus
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.jvm.javaMethod
 
-fun <T : Any> analysisFunctionFetcher(function: KFunction<*>, entityClazz: KClass<T>): FetcherImplementor<T> {
-    val fetcherImpl: FetcherImpl<T> = FetcherImpl(entityClazz.java)
-    val analyzeMethods: MutableSet<AsmMethodInfo> = ClassMethodAnalyzer.analyzeMethods(function.javaMethod!!)
+fun <T : Any> analysisMethodFetcher(entityClazz: Class<T>, methodInfo: MethodInfo): FetcherImplementor<T> {
+    val fetcherImpl: FetcherImpl<T> = FetcherImpl(entityClazz)
+    val analyzeMethods: MutableSet<MethodInfo> = ClassMethodAnalyzer.analyzeMethods(methodInfo)
     val neededGetFieldNameSet = analyzeMethods.filter {
 //        it.ownerClass == function.javaMethod?.declaringClass?.name&&
                 it.desc.startsWith("()")&&
@@ -26,12 +23,12 @@ fun <T : Any> analysisFunctionFetcher(function: KFunction<*>, entityClazz: KClas
     return asmMethodInfoToFetcher(fetcherImpl, neededGetFieldNameSet)
 }
 
-private fun <T> asmMethodInfoToFetcher(baseFetcher:FetcherImplementor<T>,asmMethodInfoSet: HashSet<AsmMethodInfo>,loadedClassList:List<Class<*>> = arrayListOf()): FetcherImplementor<T> {
+private fun <T> asmMethodInfoToFetcher(baseFetcher:FetcherImplementor<T>, methodInfoSet: HashSet<MethodInfo>, loadedClassList:List<Class<*>> = arrayListOf()): FetcherImplementor<T> {
     var fetcher:FetcherImplementor<T> = baseFetcher
     for (prop in fetcher.immutableType.props.values) {
-        val asmMethodInfo = AsmMethodInfo(fetcher.immutableType.javaClass.name,prop.name, Type.getMethodDescriptor(Type.getType(prop.returnClass)))
+        val methodInfo = MethodInfo(fetcher.immutableType.javaClass.name,prop.name, Type.getMethodDescriptor(Type.getType(prop.returnClass)))
 
-        if (!asmMethodInfoSet.contains(asmMethodInfo)) {
+        if (!methodInfoSet.contains(methodInfo)) {
             continue
         }
         val annotations = prop.annotations
@@ -45,7 +42,7 @@ private fun <T> asmMethodInfoToFetcher(baseFetcher:FetcherImplementor<T>,asmMeth
                 if (!loadedClassList.contains(prop.targetType.javaClass)){
                     val fields = asmMethodInfoToFetcher(
                         FetcherImpl(prop.targetType.javaClass),
-                        asmMethodInfoSet,
+                        methodInfoSet,
                         loadedClassList + fetcher.immutableType.javaClass
                     )
                     fetcher = fetcher.add(prop.name,fields)

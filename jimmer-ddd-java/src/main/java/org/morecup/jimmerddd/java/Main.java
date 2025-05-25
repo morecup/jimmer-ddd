@@ -1,14 +1,16 @@
 package org.morecup.jimmerddd.java;
 
-import org.morecup.jimmerddd.java.function.LambdaUtils;
+import org.morecup.jimmerddd.core.preanalysis.MethodInfo;
+import org.morecup.jimmerddd.java.function.MI;
 
 public class Main {
     public static void main(String[] args) {
         new Main().test();
-
+        new Main().test();
     }
 
     private void test() {
-        new LambdaUtils().getColumnName(TestInt::test);
+        MethodInfo mi = MI.of(TestInt::test);
+        System.out.println(mi);
     }
 }

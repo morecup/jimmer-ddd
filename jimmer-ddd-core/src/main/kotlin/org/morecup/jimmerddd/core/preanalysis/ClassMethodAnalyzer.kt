@@ -2,20 +2,21 @@ package org.morecup.jimmerddd.core.preanalysis
 
 import org.objectweb.asm.*
 import org.objectweb.asm.Opcodes
+import java.lang.invoke.SerializedLambda
 import java.lang.reflect.Method
 import kotlin.collections.getOrPut
 
 class ClassMethodAnalyzer {
 
     data class AnalysisResult(
-        val methodCalls: MutableMap<AsmMethodInfo, MutableSet<AsmMethodInfo>> = mutableMapOf(),
-        val lambdaRelations: MutableMap<AsmMethodInfo, AsmMethodInfo> = mutableMapOf()
+        val methodCalls: MutableMap<MethodInfo, MutableSet<MethodInfo>> = mutableMapOf(),
+        val lambdaRelations: MutableMap<MethodInfo, MethodInfo> = mutableMapOf()
     ) {
-        fun addCall(caller: AsmMethodInfo, callee: AsmMethodInfo) {
+        fun addCall(caller: MethodInfo, callee: MethodInfo) {
             methodCalls.getOrPut(caller) { mutableSetOf() }.add(callee)
         }
 
-        fun linkLambda(lambdaMethod: AsmMethodInfo, originMethod: AsmMethodInfo) {
+        fun linkLambda(lambdaMethod: MethodInfo, originMethod: MethodInfo) {
             lambdaRelations[lambdaMethod] = originMethod
         }
 
@@ -28,15 +29,15 @@ class ClassMethodAnalyzer {
             }
         }
 
-        fun getCalledListByMethod(method: AsmMethodInfo): MutableSet<AsmMethodInfo> {
-            val mutableSet: MutableSet<AsmMethodInfo> = mutableSetOf()
+        fun getCalledListByMethod(method: MethodInfo): MutableSet<MethodInfo> {
+            val mutableSet: MutableSet<MethodInfo> = mutableSetOf()
             callHierarchy(method,mutableSet)
             return mutableSet
         }
 
         private fun callHierarchy(
-            method: AsmMethodInfo,
-            calledList: MutableSet<AsmMethodInfo>,
+            method: MethodInfo,
+            calledList: MutableSet<MethodInfo>,
         ){
             if (calledList.contains(method)) return
             calledList.add(method)
@@ -53,9 +54,9 @@ class ClassMethodAnalyzer {
 
 
         private fun printCallHierarchy(
-            method: AsmMethodInfo,
+            method: MethodInfo,
             indent: String,
-            visited: MutableSet<AsmMethodInfo>
+            visited: MutableSet<MethodInfo>
         ) {
             if (method in visited) return  // 避免循环调用
             visited.add(method)
@@ -104,7 +105,7 @@ class ClassMethodAnalyzer {
             signature: String?,
             exceptions: Array<out String>?
         ): MethodVisitor {
-            val methodKey = AsmMethodInfo(currentClass, name ?: "", descriptor ?: "")
+            val methodKey = MethodInfo(currentClass, name ?: "", descriptor ?: "")
             val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
 
             return object : MethodVisitor(Opcodes.ASM9, mv) {
@@ -117,7 +118,7 @@ class ClassMethodAnalyzer {
                     isInterface: Boolean
                 ) {
                     if (true) {
-                        val callee = AsmMethodInfo(
+                        val callee = MethodInfo(
                             owner ?: "",
                             name ?: "",
                             descriptor ?: ""
@@ -141,7 +142,7 @@ class ClassMethodAnalyzer {
                                 Opcodes.H_INVOKEVIRTUAL,
                                 Opcodes.H_INVOKESPECIAL,
                                 Opcodes.H_INVOKEINTERFACE -> {
-                                    val lambdaMethod = AsmMethodInfo(
+                                    val lambdaMethod = MethodInfo(
                                         handle.owner,
                                         handle.name,
                                         handle.desc
@@ -188,16 +189,29 @@ class ClassMethodAnalyzer {
             return result
         }
 
-        fun analyzeMethods(method: Method): MutableSet<AsmMethodInfo> {
+        fun analyzeMethods(methodInfo: MethodInfo): MutableSet<MethodInfo> {
+            val result = analyze(methodInfo.ownerClass)
+            val calledListByMethod: MutableSet<MethodInfo> = result.getCalledListByMethod(methodInfo)
+            return calledListByMethod
+        }
+
+        fun analyzeMethods(method: Method): MutableSet<MethodInfo> {
             val result = analyze(method.declaringClass.name)
-            val calledListByMethod: MutableSet<AsmMethodInfo> = result.getCalledListByMethod(AsmMethodInfo(method))
+            val calledListByMethod: MutableSet<MethodInfo> = result.getCalledListByMethod(MethodInfo(method))
+            return calledListByMethod
+        }
+
+        fun analyzeMethods(serializableLambda: SerializedLambda): MutableSet<MethodInfo> {
+            val methodInfo = MethodInfo(serializableLambda)
+            val result = analyze(methodInfo.ownerClass)
+            val calledListByMethod: MutableSet<MethodInfo> = result.getCalledListByMethod(methodInfo)
             return calledListByMethod
         }
     }
 
 }
 
-class AsmMethodInfo {
+class MethodInfo {
     var ownerClass: String  // 已处理后的类名
     var name: String
     var desc: String
@@ -214,12 +228,18 @@ class AsmMethodInfo {
         this.desc = Type.getMethodDescriptor(method)
     }
 
+    constructor(serializableLambda: SerializedLambda) {
+        ownerClass = serializableLambda.implClass.replace('/', '.')
+        this.name = serializableLambda.implMethodName
+        this.desc = serializableLambda.implMethodSignature
+    }
+
     override fun toString() = "$ownerClass.$name$desc"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as AsmMethodInfo
+        other as MethodInfo
         if (ownerClass != other.ownerClass) return false
         if (name != other.name) return false
         if (desc != other.desc) return false

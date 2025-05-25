@@ -6,7 +6,7 @@ plugins {
 val jimmerVersion: String = "0.2.0-0.9.81"
 
 dependencies {
-    compileOnly("io.github.morecup:jimmer-sql-kotlin:${jimmerVersion}")
+    api("io.github.morecup:jimmer-sql-kotlin:${jimmerVersion}")
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.ow2.asm:asm-tree:9.8")
     compileOnly("org.slf4j:slf4j-api:2.0.7")
