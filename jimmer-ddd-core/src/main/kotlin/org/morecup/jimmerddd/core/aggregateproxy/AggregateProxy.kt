@@ -1,12 +1,13 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
-import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
+import org.babyfish.jimmer.meta.ImmutableType
 import org.babyfish.jimmer.meta.TargetLevel
 import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
+import org.babyfish.jimmer.runtime.Internal
 import org.babyfish.jimmer.runtime.ListDraft
 import org.babyfish.jimmer.sql.collection.MutableIdViewList
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
@@ -212,13 +213,12 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                             propName = prop.name
                             args[0] = args[0]?.let {
                                 when (it){
-                                    is ImmutableSpi -> {
-                                        makeIdOnly(it.__type(),it)
-                                    }
                                     is List<*> -> {
-                                        it.map { makeIdOnly((it as ImmutableSpi).__type(),it) as Any? }
+                                        it.map { makeIdOnly(prop.targetType,it,draftContext) as Any? }
                                     }
-                                    else -> throw JimmerDDDException("buildProxyDraft idView args ${base::class.simpleName} not supported")
+                                    else -> {
+                                        makeIdOnly(prop.targetType,it,draftContext)
+                                    }
                                 }
                             }
                         }
@@ -260,6 +260,20 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
             }
             else -> throw JimmerDDDException("buildProxyDraft ${base::class.simpleName} not supported")
         }
+    }
+
+    fun makeIdOnly( type:ImmutableType, id: Any?,draftContext: DraftContext): Any? {
+        // 获取类型的 ID 属性
+        val idProp = type.idProp
+        // 检查 ID 属性是否为空，若为空则抛出异常
+        requireNotNull(idProp) { "No id property in \"$type\"" }
+        // 若 ID 为空则返回 null
+        if (id == null) {
+            return null
+        }
+        val changedDraft = type.draftFactory.apply(draftContext,null).let { it as DraftSpi }
+        changedDraft.__set(idProp.id,id)
+        return changedDraft.__resolve()
     }
 }
 
