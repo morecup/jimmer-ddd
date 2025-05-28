@@ -1,5 +1,6 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
+import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.TargetLevel
@@ -7,6 +8,7 @@ import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
 import org.babyfish.jimmer.runtime.ListDraft
+import org.babyfish.jimmer.sql.collection.MutableIdViewList
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.usingDraftContext
 import org.morecup.jimmerddd.core.annotation.AggregatedField
@@ -18,6 +20,10 @@ import org.morecup.jimmerddd.core.JimmerDDDException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Proxy
+import kotlin.collections.MutableList
+import kotlin.collections.map
+import kotlin.collections.mapNotNull
+import kotlin.collections.toMutableList
 import kotlin.jvm.java
 
 /**
@@ -63,7 +69,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return haveLazyListPropBase.__get(loadProp.id)
     }
 
-    fun reloadAndGetField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext): Any? {
+    fun reloadAndGetField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             //                            判断是否是别的表的关联字段
@@ -84,7 +90,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                     }else{
                         return tempDraft.__get(propName)
                     }
-                }else if (aggregatedField.type == AggregationType.NON_AGGREGATED){
+                }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
                     throw JimmerDDDException("不是聚合根的字段，不应该能够懒加载")
                 }
             }
@@ -103,6 +109,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val changedDraft = type.draftFactory.apply(draftContext, null).let { it as DraftSpi }
         changedDraft.__set(type.idProp.id,tempDraft.__get(type.idProp.id))
 
+        //属性是否已经加载过的map
         val propertiesHasSetMap = mutableMapOf<String, Boolean>()
         val propertiesLazyHasLoadMap = mutableMapOf<String, Boolean>()
 
@@ -114,7 +121,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
 
             val methodName = method.name
             if (method.parameterCount == 0 && (method.returnType != Void.TYPE && method.returnType != Unit::class.java)) {
-                val propName = if (methodName.startsWith("get")) {
+                var propName = if (methodName.startsWith("get")) {
                     methodName.substring(3)
                         .replaceFirstChar { it.lowercase() }
                 } else if (methodName.startsWith("is")) {
@@ -124,33 +131,39 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                     methodName
                 }
                 if (propName in propNames) {
-                    val prop = type.props[propName]!!
+                    var result:Any? = null
+                    var prop = type.props[propName]!!
+                    val isView = prop.isView
+                    if (isView){
+                        prop = prop.idViewBaseProp
+                        propName = prop.name
+                    }
                     val annotations = prop.annotations
                     val lazy = annotations.filterIsInstance<Lazy>().firstOrNull()
                     val hasLoad: Boolean = propertiesLazyHasLoadMap.getOrDefault(propName, false)
                     if (lazy != null && !hasLoad){
                         propertiesLazyHasLoadMap.put(propName, true)
-                        return@newProxyInstance reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext)
-                    }
-                    try {
-                        if (prop.isAssociation(TargetLevel.ENTITY)){
-                            val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
-                            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
-                                if (!propertiesHasSetMap.getOrDefault(propName, false)) {
+                        result = reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,false)
+                    }else{
+                        try {
+                            if (prop.isAssociation(TargetLevel.ENTITY)){
+                                val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
+                                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
+                                    if (!propertiesHasSetMap.getOrDefault(propName, false)) {
+                                        val tempDraftValue = tempDraft.__get(propName)
+                                        val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
+                                        propertiesHasSetMap.put(propName,true)
+                                        tempDraft.__set(propName, proxyAssociationDraft)
+                                        changedDraft.__set(propName, changedAssociationDraft)
+                                    }
                                     val tempDraftValue = tempDraft.__get(propName)
-                                    val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
-                                    propertiesHasSetMap.put(propName,true)
-                                    tempDraft.__set(propName, proxyAssociationDraft)
-                                    changedDraft.__set(propName, changedAssociationDraft)
-                                }
-                                val tempDraftValue = tempDraft.__get(propName)
-                                val changedDraftValue = changedDraft.__get(propName)
-                                if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>){
-                                    val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
-                                    return@newProxyInstance delegatedMutableList
-                                }else{
-                                    return@newProxyInstance tempDraft.__get(propName)
-                                }
+                                    val changedDraftValue = changedDraft.__get(propName)
+                                    if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>){
+                                        val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
+                                        result =  delegatedMutableList
+                                    }else{
+                                        result =  tempDraft.__get(propName)
+                                    }
 //                                if (tempDraftValue !is DelegatedMutableList<*> && tempDraftValue is ListDraft<*> && changedDraftValue !is DelegatedMutableList<*> && changedDraftValue is ListDraft<*>){
 //                                    val listDraftMap: IdentityHashMap<List<*>, ListDraft<*>> = draftContext.getListDraftMap()
 //                                    val delegatedMutableList: DelegatedMutableList<*> =
@@ -160,36 +173,65 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
 //                                }else{
 //                                    return@newProxyInstance tempDraft.__get(propName)
 //                                }
-                            }else if (aggregatedField.type == AggregationType.NON_AGGREGATED){
-                                throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
+                                }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
+                                    throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
+                                }
+                            }else{
+                                result = tempDraft.__get(propName)
                             }
-                        }else{
-                            return@newProxyInstance tempDraft.__get(propName)
-                        }
-                    } catch (e: UnloadedException) {
+                        } catch (e: UnloadedException) {
 //                        兜底没加载的字段 再次请求sql去访问
-                        log.warn("$proxyClass $propName 字段并没有传入，但却被强制重新从数据库加载了!")
-                        return@newProxyInstance reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext)
+                            log.warn("$proxyClass $propName 字段并没有传入，但却被强制重新从数据库加载了!")
+                            result =  reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,isView)
+                        }
                     }
+                    if (isView){
+                        when (result){
+                            is ImmutableSpi -> {
+                                return@newProxyInstance result.__get(result.__type().idProp.id)
+                            }
+                            is DelegatedMutableList<*> -> {
+                                return@newProxyInstance MutableIdViewList<Any,Any>(prop.targetType,result as List<*>)
+                            }
+                            else -> throw JimmerDDDException("buildProxyDraft idView ${base::class.simpleName} not supported")
+                        }
+                    }
+                    return@newProxyInstance result
                 }
             }
 
             if (method.parameterCount == 1 && (method.returnType == Void.TYPE || method.returnType == Unit::class.java)) {
                 if (methodName.startsWith("set")) {
-                    val propName = methodName.substring(3)
+                    var propName = methodName.substring(3)
                         .replaceFirstChar { it.lowercase() }
                     if (propName in propNames) {
-                        val prop = type.props[propName]!!
+                        var prop = type.props[propName]!!
+                        val isView = prop.isView
+                        if (isView){
+                            prop = prop.idViewBaseProp
+                            propName = prop.name
+                            args[0] = args[0]?.let {
+                                when (it){
+                                    is ImmutableSpi -> {
+                                        makeIdOnly(it.__type(),it)
+                                    }
+                                    is List<*> -> {
+                                        it.map { makeIdOnly((it as ImmutableSpi).__type(),it) as Any? }
+                                    }
+                                    else -> throw JimmerDDDException("buildProxyDraft idView args ${base::class.simpleName} not supported")
+                                }
+                            }
+                        }
                         val annotations = prop.annotations
                         if (prop.isAssociation(TargetLevel.ENTITY)){
                             val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
-                            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED) {
+                            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
                                 val value = args[0]
                                 val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, value)
                                 propertiesHasSetMap.put(propName,true)
                                 tempDraft.__set(propName, proxyAssociationDraft)
                                 return@newProxyInstance changedDraft.__set(propName, changedAssociationDraft)
-                            }else if (aggregatedField.type == AggregationType.NON_AGGREGATED){
+                            }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
                                 throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
                             }
                         }

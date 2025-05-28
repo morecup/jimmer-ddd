@@ -53,7 +53,7 @@ interface Order : BaseEntity {
     val orderDetail: OrderDetail
 
     @OneToOne
-    @AggregatedField(type = AggregationType.NON_AGGREGATED)
+    @AggregatedField(type = AggregationType.ID_ONLY)
     val goods: Goods?
 
     @IdView
