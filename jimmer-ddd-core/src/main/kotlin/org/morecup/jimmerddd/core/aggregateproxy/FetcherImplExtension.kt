@@ -2,6 +2,7 @@ package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImplementor
+import org.babyfish.jimmer.sql.meta.JoinTemplate
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy
@@ -10,7 +11,11 @@ import org.morecup.jimmerddd.core.annotation.PrepareLoadMode
 fun <E> FetcherImpl<E>.allAggregationFields(loadedClassList:List<Class<*>> = arrayListOf()):FetcherImplementor<E> {
     var fetcher:FetcherImplementor<E> = this
     for (prop in immutableType.props.values) {
-        if (prop.isTransient && !prop.hasTransientResolver()) {
+        if (prop.isTransient
+            || prop.isFormula
+//            || !prop.dependencies.isEmpty()
+//            || prop.sqlTemplate is JoinTemplate
+        ){
             continue
         }
         val annotations = prop.annotations
