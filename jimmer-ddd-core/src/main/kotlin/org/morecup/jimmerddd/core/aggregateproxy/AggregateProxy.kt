@@ -55,7 +55,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return changed to result
     }
 
-    fun associationPropReloadValue(spi:ImmutableSpi, loadProp: ImmutableProp): Any {
+    private fun associationPropReloadValue(spi:ImmutableSpi, loadProp: ImmutableProp): Any {
         val type = spi.__type()
         val targetFetcher = FetcherImpl(loadProp.targetType.javaClass).allAggregationFields(arrayListOf(type.javaClass))
         val fetcherImplementor = FetcherImpl(type.javaClass).add(loadProp.name,targetFetcher)
@@ -64,7 +64,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return haveLazyListPropBase.__get(loadProp.id)
     }
 
-    fun aggregatePropReloadValue(spi:ImmutableSpi, loadProp: ImmutableProp): Any? {
+    private fun aggregatePropReloadValue(spi:ImmutableSpi, loadProp: ImmutableProp): Any? {
         val type = spi.__type()
         val fetcherImplementor = FetcherImpl(type.javaClass).add(loadProp.name)
         val idValue = spi.__get(type.idProp.id)
@@ -72,7 +72,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return haveLazyListPropBase.__get(loadProp.id)
     }
 
-    fun reloadAndGetField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
+    private fun reloadAndGetField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null){
@@ -101,12 +101,13 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return reloadValue
     }
 
-    fun getField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
+    private fun getField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null) {
                 val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
                 if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY) {
+//                    如果没有加载过，就加载并设置
                     if (!propertiesHasSetMap.getOrDefault(propName, false)) {
                         val tempDraftValue = tempDraft.__get(propName)
                         val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(
@@ -134,7 +135,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return tempDraft.__get(propName)
     }
 
-    fun buildProxyDraftFromNoList(draftContext:DraftContext, base: Any, proxyClass: Class<*>? = null): AssociationDraft{
+    private fun buildProxyDraftFromNoList(draftContext:DraftContext, base: Any, proxyClass: Class<*>? = null): AssociationDraft{
         val spi = base as ImmutableSpi
         val type = spi.__type()
         val propNames = type.props.keys
@@ -248,7 +249,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return AssociationDraft(impl , changedDraft)
     }
 
-    fun buildProxyDraft(draftContext:DraftContext,base: Any): AssociationDraft {
+    private fun buildProxyDraft(draftContext:DraftContext,base: Any): AssociationDraft {
         when (base){
             is ImmutableSpi -> {
                 return buildProxyDraftFromNoList(draftContext,base)
@@ -263,7 +264,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         }
     }
 
-    fun makeIdOnly( type:ImmutableType, id: Any?,draftContext: DraftContext): Any? {
+    private fun makeIdOnly( type:ImmutableType, id: Any?,draftContext: DraftContext): Any? {
         // 获取类型的 ID 属性
         val idProp = type.idProp
         // 检查 ID 属性是否为空，若为空则抛出异常
