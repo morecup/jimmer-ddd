@@ -22,6 +22,7 @@ import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.JimmerDDDException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import sun.reflect.misc.FieldUtil.getField
 import java.lang.reflect.Proxy
 import kotlin.collections.MutableList
 import kotlin.collections.map
@@ -101,7 +102,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return reloadValue
     }
 
-    private fun getField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
+    private fun getFoundField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null) {
@@ -181,7 +182,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                         result = reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,false)
                     }else{
                         try {
-                            result = getField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,isView)
+                            result = getFoundField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,isView)
                         } catch (e: UnloadedException) {
 //                        兜底没加载的字段 再次请求sql去访问
                             log.warn("$proxyClass $propName 字段并没有传入，但却被强制重新从数据库加载了!")
