@@ -84,14 +84,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                     propertiesHasSetMap.put(propName,true)
                     tempDraft.__set(propName, proxyAssociationDraft)
                     changedDraft.__set(propName, changedAssociationDraft)
-                    val tempDraftValue = tempDraft.__get(propName)
-                    val changedDraftValue = changedDraft.__get(propName)
-                    if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*> ){
-                        val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
-                        return delegatedMutableList
-                    }else{
-                        return tempDraft.__get(propName)
-                    }
+                    return getField(tempDraft,changedDraft,propName)
                 }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
                     throw JimmerDDDException("不是聚合根的字段，不应该能够懒加载")
                 }
@@ -119,21 +112,25 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                         tempDraft.__set(propName, proxyAssociationDraft)
                         changedDraft.__set(propName, changedAssociationDraft)
                     }
-                    val tempDraftValue = tempDraft.__get(propName)
-                    val changedDraftValue = changedDraft.__get(propName)
-                    if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>) {
-                        val delegatedMutableList =
-                            DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
-                        return delegatedMutableList
-                    } else {
-                        return tempDraft.__get(propName)
-                    }
+                    return getField(tempDraft,changedDraft,propName)
                 } else if (aggregatedField.type == AggregationType.NON_AGGREGATED && !isView) {
                     throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
                 }
             }
         }
         return tempDraft.__get(propName)
+    }
+
+    private fun getField(tempDraft:DraftSpi,changedDraft:DraftSpi,propName: String): Any? {
+        val tempDraftValue = tempDraft.__get(propName)
+        val changedDraftValue = changedDraft.__get(propName)
+        if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>) {
+            val delegatedMutableList =
+                DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
+            return delegatedMutableList
+        } else {
+            return tempDraft.__get(propName)
+        }
     }
 
     private fun buildProxyDraftFromNoList(draftContext:DraftContext, base: Any, proxyClass: Class<*>? = null): AssociationDraft{
