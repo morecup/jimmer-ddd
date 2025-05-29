@@ -75,9 +75,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun reloadAndGetField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
-            //                            判断是否是别的表的关联字段
             if (prop.targetType != null){
-
                 val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
                 if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
                     val reloadValue = associationPropReloadValue(spi,prop)
@@ -106,25 +104,31 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun getField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
-            val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
-            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
-                if (!propertiesHasSetMap.getOrDefault(propName, false)) {
+            if (prop.targetType != null) {
+                val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
+                if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY) {
+                    if (!propertiesHasSetMap.getOrDefault(propName, false)) {
+                        val tempDraftValue = tempDraft.__get(propName)
+                        val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(
+                            draftContext,
+                            tempDraftValue
+                        )
+                        propertiesHasSetMap.put(propName, true)
+                        tempDraft.__set(propName, proxyAssociationDraft)
+                        changedDraft.__set(propName, changedAssociationDraft)
+                    }
                     val tempDraftValue = tempDraft.__get(propName)
-                    val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
-                    propertiesHasSetMap.put(propName,true)
-                    tempDraft.__set(propName, proxyAssociationDraft)
-                    changedDraft.__set(propName, changedAssociationDraft)
+                    val changedDraftValue = changedDraft.__get(propName)
+                    if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>) {
+                        val delegatedMutableList =
+                            DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
+                        return delegatedMutableList
+                    } else {
+                        return tempDraft.__get(propName)
+                    }
+                } else if (aggregatedField.type == AggregationType.NON_AGGREGATED && !isView) {
+                    throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
                 }
-                val tempDraftValue = tempDraft.__get(propName)
-                val changedDraftValue = changedDraft.__get(propName)
-                if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>){
-                    val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
-                    return delegatedMutableList
-                }else{
-                    return tempDraft.__get(propName)
-                }
-            }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
-                throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
             }
         }
         return tempDraft.__get(propName)
