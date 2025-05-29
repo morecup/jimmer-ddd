@@ -1,6 +1,8 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
+import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.UnloadedException
+import org.babyfish.jimmer.impl.util.StringUtil.propName
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.ImmutableType
 import org.babyfish.jimmer.meta.TargetLevel
@@ -101,6 +103,33 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         return reloadValue
     }
 
+    fun getField(prop: ImmutableProp,tempDraft:DraftSpi,changedDraft:DraftSpi,spi:ImmutableSpi,propertiesHasSetMap: MutableMap<String, Boolean>,draftContext:DraftContext,isView:Boolean): Any? {
+        val propName = prop.name
+        if (prop.isAssociation(TargetLevel.ENTITY)){
+            val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
+            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
+                if (!propertiesHasSetMap.getOrDefault(propName, false)) {
+                    val tempDraftValue = tempDraft.__get(propName)
+                    val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
+                    propertiesHasSetMap.put(propName,true)
+                    tempDraft.__set(propName, proxyAssociationDraft)
+                    changedDraft.__set(propName, changedAssociationDraft)
+                }
+                val tempDraftValue = tempDraft.__get(propName)
+                val changedDraftValue = changedDraft.__get(propName)
+                if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>){
+                    val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
+                    return delegatedMutableList
+                }else{
+                    return tempDraft.__get(propName)
+                }
+            }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
+                throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
+            }
+        }
+        return tempDraft.__get(propName)
+    }
+
     fun buildProxyDraftFromNoList(draftContext:DraftContext, base: Any, proxyClass: Class<*>? = null): AssociationDraft{
         val spi = base as ImmutableSpi
         val type = spi.__type()
@@ -147,39 +176,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
                         result = reloadAndGetField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,false)
                     }else{
                         try {
-                            if (prop.isAssociation(TargetLevel.ENTITY)){
-                                val aggregatedField = annotations.filterIsInstance<AggregatedField>().firstOrNull()
-                                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
-                                    if (!propertiesHasSetMap.getOrDefault(propName, false)) {
-                                        val tempDraftValue = tempDraft.__get(propName)
-                                        val (proxyAssociationDraft, changedAssociationDraft) = buildProxyDraft(draftContext, tempDraftValue)
-                                        propertiesHasSetMap.put(propName,true)
-                                        tempDraft.__set(propName, proxyAssociationDraft)
-                                        changedDraft.__set(propName, changedAssociationDraft)
-                                    }
-                                    val tempDraftValue = tempDraft.__get(propName)
-                                    val changedDraftValue = changedDraft.__get(propName)
-                                    if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>){
-                                        val delegatedMutableList = DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
-                                        result =  delegatedMutableList
-                                    }else{
-                                        result =  tempDraft.__get(propName)
-                                    }
-//                                if (tempDraftValue !is DelegatedMutableList<*> && tempDraftValue is ListDraft<*> && changedDraftValue !is DelegatedMutableList<*> && changedDraftValue is ListDraft<*>){
-//                                    val listDraftMap: IdentityHashMap<List<*>, ListDraft<*>> = draftContext.getListDraftMap()
-//                                    val delegatedMutableList: DelegatedMutableList<*> =
-//                                        DelegatedMutableList(tempDraftValue, changedDraftValue as ListDraft<Any>)
-//                                    listDraftMap.replaceValuesByReference(tempDraftValue,DelegatedMutableList(tempDraftValue,changedDraftValue as ListDraft<Any>))
-//                                    return@newProxyInstance delegatedMutableList
-//                                }else{
-//                                    return@newProxyInstance tempDraft.__get(propName)
-//                                }
-                                }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!isView){
-                                    throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
-                                }
-                            }else{
-                                result = tempDraft.__get(propName)
-                            }
+                            result = getField(prop,tempDraft,changedDraft,spi,propertiesHasSetMap,draftContext,isView)
                         } catch (e: UnloadedException) {
 //                        兜底没加载的字段 再次请求sql去访问
                             log.warn("$proxyClass $propName 字段并没有传入，但却被强制重新从数据库加载了!")
