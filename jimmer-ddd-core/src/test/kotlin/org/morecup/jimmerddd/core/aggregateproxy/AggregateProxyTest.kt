@@ -9,6 +9,8 @@ import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
 import org.babyfish.jimmer.runtime.Internal
 import org.babyfish.jimmer.runtime.NonSharedList
+import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
+import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImplementor
 import org.babyfish.jimmer.sql.kt.KSqlClient
@@ -17,6 +19,7 @@ import org.babyfish.jimmer.sql.kt.fetcher.newFetcher
 import org.junit.jupiter.api.Test
 import org.morecup.jimmerddd.core.App
 import org.morecup.jimmerddd.core.domain.SnowflakeIdGenerator
+import org.morecup.jimmerddd.core.domain.goods.Goods
 import org.morecup.jimmerddd.core.domain.order.Order
 import org.morecup.jimmerddd.core.domain.order.OrderFactory
 import org.morecup.jimmerddd.core.domain.order.OrderImpl
@@ -170,6 +173,14 @@ class AggregateProxyTest {
         println(changedDraft)
         repository.saveOrder(changedDraft.toAssociatedFixed())
     }
+
+    @Test
+    fun testUserIdGenerator(){
+        sql.save(Goods {
+            name = "商品1"
+            nowAddress = "上海"
+        }, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE)
+    }
 }
 
 fun String.formatJsonString(): String {
@@ -188,36 +199,4 @@ fun String.formatJsonString(): String {
         // 处理无效 JSON 的异常
         throw IllegalArgumentException("Invalid JSON input", e)
     }
-}
-fun <T> T.toAssociatedFixed(autoAddListId: Boolean = true): T {
-    val immutable = this
-    val spi = immutable as ImmutableSpi
-    val type = spi.__type()
-//this::class.java.declaringClass.declaringClass
-    return Internal.produce(type, immutable) { draft ->
-        type.props.values.forEach { prop ->
-            val propId = prop.id
-            if (prop.isAssociation(TargetLevel.ENTITY) && spi.__isLoaded(propId)) {
-                val target = spi.__get(propId)
-                when (target){
-                    is MutableList<*> -> {
-                        val newList = target.mapNotNull { item ->
-                            val itemSpi = item as ImmutableSpi
-                            val itemType = itemSpi.__type()
-                            val itemIdPropId = itemType.idProp.id
-
-                            if (!itemSpi.__isLoaded(itemIdPropId)&&autoAddListId){
-                                val newItem = Internal.produce(prop.targetType, itemSpi){
-                                    (it as DraftSpi).__set(itemIdPropId, SnowflakeIdGenerator.snowflake.nextId())
-                                }
-                                return@mapNotNull newItem.toAssociatedFixed(autoAddListId)
-                            }
-                            return@mapNotNull item.toAssociatedFixed(autoAddListId)
-                        }
-                        (draft as DraftSpi).__set(propId, NonSharedList.of(target as NonSharedList<Any>,newList))
-                    }
-                }
-            }
-        }
-    } as T
 }

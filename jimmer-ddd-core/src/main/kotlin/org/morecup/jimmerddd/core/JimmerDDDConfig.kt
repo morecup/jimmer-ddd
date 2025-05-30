@@ -1,6 +1,7 @@
 package org.morecup.jimmerddd.core
 
 import org.babyfish.jimmer.sql.fetcher.Fetcher
+import org.babyfish.jimmer.sql.meta.UserIdGenerator
 
 typealias FindByIdFunction = (Fetcher<*>, Any) -> Any?
 typealias SaveEntityFunction = (Any) -> Any
@@ -9,6 +10,7 @@ object JimmerDDDConfig {
 
     private var findByIdFunction:FindByIdFunction? = null
     private var saveEntityFunction: SaveEntityFunction? = null
+    private var userIdGenerator:UserIdGenerator<*>? = null
 
     @JvmStatic
     fun setFindByIdFunction(findByIdFunction: FindByIdFunction) {
@@ -35,5 +37,15 @@ object JimmerDDDConfig {
         return saveEntityFunction!!
     }
 
+    @JvmStatic
+    fun setUserIdGenerator(userIdGenerator: UserIdGenerator<*>) {
+        this.userIdGenerator = userIdGenerator
+    }
 
+    internal fun getUserIdGenerator(): UserIdGenerator<*> {
+        if (userIdGenerator == null) {
+            throw JimmerDDDException("JimmerDDDConfig.userIdGenerator未配置，请配置成对应jimmer sqlClient userIdGenerator的逻辑")
+        }
+        return userIdGenerator!!
+    }
 }
