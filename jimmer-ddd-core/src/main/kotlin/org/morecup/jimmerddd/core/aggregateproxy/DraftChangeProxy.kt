@@ -1,5 +1,6 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
+import org.babyfish.jimmer.Draft
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.ImmutableType
@@ -8,6 +9,7 @@ import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
 import org.babyfish.jimmer.runtime.ListDraft
+import org.babyfish.jimmer.sql.collection.MutableIdViewList
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import kotlin.jvm.java
 
 class DraftChangeProxy(
     private val spi: ImmutableSpi,
@@ -52,11 +55,20 @@ class DraftChangeProxy(
     val proxy: Any by lazy { createProxy() }
 
     private fun createProxy(): Any {
-        return Proxy.newProxyInstance(
-            proxyClass.classLoader,
-            arrayOf(proxyClass, DraftSpi::class.java),
-            ProxyInvocationHandler()
-        )
+        if (Draft::class.java.isAssignableFrom(proxyClass)){
+            return Proxy.newProxyInstance(
+                proxyClass.classLoader,
+                arrayOf(proxyClass, DraftSpi::class.java),
+                ProxyInvocationHandler()
+            )
+        }else{
+            val proxyClassDraft = spi::class.java.declaringClass.declaringClass
+            return Proxy.newProxyInstance(
+                proxyClassDraft.classLoader,
+                arrayOf(proxyClassDraft, DraftSpi::class.java),
+                ProxyInvocationHandler()
+            )
+        }
     }
 
     inner class ProxyInvocationHandler : InvocationHandler {
@@ -68,7 +80,11 @@ class DraftChangeProxy(
                 handleSetter(it, args?.first())
                 return null
             }
-            return method.invoke(changedDraft, args)
+//            // 添加对 hashCode() 方法的处理
+//            if (method.name == "hashCode" && method.parameterCount == 0) {
+//                return System.identityHashCode(proxy)
+//            }
+            return method.invoke(changedDraft, *args.orEmpty())
         }
 
         private fun toGetterPropNameOrNull(method: Method): String? {
@@ -117,7 +133,17 @@ class DraftChangeProxy(
                 }
             }else{
                 if (prop.isView){
-                    return handleGetter(prop.idViewBaseProp.name,true)
+                    return handleGetter(prop.idViewBaseProp.name,true)?.let {
+                        when (it){
+                            is ImmutableSpi -> {
+                                it.__get(it.__type().idProp.id)
+                            }
+                            is DelegatedMutableList<*> -> {
+                                MutableIdViewList<Any,Any>(prop.targetType,it as List<*>)
+                            }
+                            else -> throw JimmerDDDException("buildProxyDraft idView ${it::class.simpleName} not supported")
+                        }
+                    }
                 }
                 try {
                     return getFoundField(prop,ignoreNotAggregatedField)
@@ -196,7 +222,7 @@ class DraftChangeProxy(
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null) {
-                val aggregatedField = prop.annotations.filterIsInstance<AggregatedField>().firstOrNull()
+                val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
                 if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY) {
 //                    如果没有加载过，就加载并设置
                     if (!propertiesHasSetMap.getOrDefault(propName, false)) {

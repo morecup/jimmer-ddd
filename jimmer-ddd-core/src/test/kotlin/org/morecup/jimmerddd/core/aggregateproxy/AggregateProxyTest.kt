@@ -26,6 +26,7 @@ import org.morecup.jimmerddd.core.domain.order.dto.CreateOrderCmd
 import org.morecup.jimmerddd.core.domain.order.fetchBy
 import org.morecup.jimmerddd.core.domain.order.id
 import org.morecup.jimmerddd.core.domain.order.orderAggregateProxy
+import org.morecup.jimmerddd.core.domain.order.orderAggregateProxy1
 import org.morecup.jimmerddd.core.domain.order.testOrderId
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo
 import org.morecup.jimmerddd.core.preanalysis.analysisMethodFetcher
