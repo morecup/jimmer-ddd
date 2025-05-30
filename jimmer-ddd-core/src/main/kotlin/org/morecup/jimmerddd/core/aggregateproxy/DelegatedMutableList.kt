@@ -3,8 +3,9 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import org.babyfish.jimmer.runtime.ListDraft
 import java.util.WeakHashMap
 import java.util.function.Predicate
+import kotlin.collections.getOrPut
 
-object DelegatedMutableListCache {
+internal object DelegatedMutableListCache {
     // 使用 WeakHashMap 防止内存泄漏（键为弱引用）
     private val cache = WeakHashMap<CacheKey, DelegatedMutableList<*>>()
 

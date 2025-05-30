@@ -26,8 +26,7 @@ internal class DraftChangeProxy(
     private val spiList: List<ImmutableSpi>,
     private val draftContext: DraftContext,
     private val proxyClass: Class<*>,
-    private val findByIdFunction: FindByIdFunction,
-    private val isSingle: Boolean = spiList.size == 1
+    private val findByIdFunction: FindByIdFunction
 ) {
     constructor(spi: ImmutableSpi,draftContext: DraftContext,proxyClass: Class<*>, findByIdFunction: FindByIdFunction)
             : this(arrayListOf(spi),draftContext,proxyClass,findByIdFunction)
@@ -37,6 +36,8 @@ internal class DraftChangeProxy(
     }
 
     private val propNameDraftManager = PropNameDraftManager(spiList,draftContext)
+
+    private val isSingle: Boolean = spiList.size == 1
 
     /**
      * 变更后的草稿对象，用于存储变更后的属性值。
