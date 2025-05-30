@@ -37,7 +37,11 @@ class DraftChangeProxy(
     /**
      * 变更后的草稿对象，用于存储变更后的属性值。
      */
-    val changedDraft = type.draftFactory.apply(draftContext, null).let { it as DraftSpi }
+    val changedDraft = type.draftFactory.apply(draftContext, null).let {
+        it as DraftSpi
+        it.__set(type.idProp.id,tempDraft.__get(type.idProp.id))
+        it
+    }
     private val propertiesLazyHasLoadMap = mutableMapOf<String, Boolean>()
     //属性是否已经加载过的map
     private val propertiesHasSetMap = mutableMapOf<String, Boolean>()
