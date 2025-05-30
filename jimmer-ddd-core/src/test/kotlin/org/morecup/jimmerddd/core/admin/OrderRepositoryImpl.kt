@@ -14,6 +14,7 @@ open class OrderRepositoryImpl(
 ) : AbstractKotlinRepository<Order, Long>(sql), OrderRepository {
 
     override fun saveOrder(order: Order): Order {
+        sql.save(order, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE)
         return save(order, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE).modifiedEntity
     }
 
