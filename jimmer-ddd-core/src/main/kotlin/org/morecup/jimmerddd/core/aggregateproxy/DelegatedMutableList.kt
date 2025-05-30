@@ -10,8 +10,8 @@ object DelegatedMutableListCache {
 
     // 定义缓存键（包含 tempDraftValue 和 changedDraftValue 的哈希）
     private data class CacheKey(
-        val tempDraftHash: Int,
-        val changedDraftHash: Int
+        val tempDraftHash: ListDraft<*>,
+        val changedDraftHash: ListDraft<*>
     )
 
     // 获取或创建 DelegatedMutableList 实例
@@ -21,8 +21,8 @@ object DelegatedMutableListCache {
     ): DelegatedMutableList<T> {
         // 生成唯一键
         val key = CacheKey(
-            tempDraftValue.hashCode(),
-            changedDraftValue.hashCode()
+            tempDraftValue,
+            changedDraftValue
         )
 
         // 检查缓存
