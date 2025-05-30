@@ -24,7 +24,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun <T, R> execAndSave(base: T, implProcessor: (P) -> R): R {
         val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         val (changed, result) = context.execute(implProcessor)
-        saveEntityFunction.invoke(changed!!.toAssociatedFixed())
+        saveEntityFunction.invoke(baseAssociatedFixed(changed!!))
         return result
     }
 
@@ -34,7 +34,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun <T, R> execAndSaveRM(base: T, implProcessor: (P) -> R): Pair<T, R> {
         val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         val (changed, result) = context.execute(implProcessor)
-        val modified = saveEntityFunction.invoke(changed!!.toAssociatedFixed())
+        val modified = saveEntityFunction.invoke(baseAssociatedFixed(changed!!))
         return modified as T to result
     }
 
@@ -49,13 +49,13 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val arrayBases = arrayListOf(bases)
         val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
         val (changed, result) = context.execute(implProcessor)
-        changed.forEach { saveEntityFunction.invoke(it.toAssociatedFixed()) }
+        changed.forEach { saveEntityFunction.invoke(baseAssociatedFixed(it)) }
         return result
     }
 }
 
-fun <T> T.toAssociatedFixed(autoAddListId: Boolean = true): T {
-    val immutable = this
+fun <T> baseAssociatedFixed(base:T,autoAddListId: Boolean = true): T {
+    val immutable = base
     val spi = immutable as ImmutableSpi
     val type = spi.__type()
 //this::class.java.declaringClass.declaringClass
@@ -75,9 +75,9 @@ fun <T> T.toAssociatedFixed(autoAddListId: Boolean = true): T {
                                 val newItem = Internal.produce(prop.targetType, itemSpi){
                                     (it as DraftSpi).__set(itemIdPropId, getUserIdGenerator().generate(prop.targetType.javaClass))
                                 }
-                                return@mapNotNull newItem.toAssociatedFixed(true)
+                                return@mapNotNull baseAssociatedFixed(newItem,true)
                             }
-                            return@mapNotNull item.toAssociatedFixed(autoAddListId)
+                            return@mapNotNull baseAssociatedFixed(item,autoAddListId)
                         }
                         (draft as DraftSpi).__set(propId, NonSharedList.of(target as NonSharedList<Any>,newList))
                     }
