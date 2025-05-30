@@ -1,5 +1,7 @@
 package org.morecup.jimmerddd.core
 
+import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
+import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.KSqlClient
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.event.ContextRefreshedEvent
@@ -17,6 +19,10 @@ open class DDDConfig(
         // 配置 JimmerDDDConfig 的 findByIdFunction
         JimmerDDDConfig.setFindByIdFunction{ fetcher, id ->
             kSqlClient.findById(fetcher, id)
+        }
+        // 配置 JimmerDDDConfig 的 saveEntityFunction
+        JimmerDDDConfig.setSaveEntityFunction{ entity ->
+            kSqlClient.save(entity, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE).modifiedEntity
         }
     }
 }
