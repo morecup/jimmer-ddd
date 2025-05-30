@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.core.aggregateproxy.test
+package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
@@ -9,7 +9,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
 ) {
 
     fun <T, R> exec(base: T, implProcessor: (P) -> R): Pair<T, R> {
-        val context = ProxyContext<T,P>(base, implInterfaceClass, findByIdFunction)
+        val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         return context.execute(implProcessor)
     }
 }

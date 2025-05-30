@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.core.aggregateproxy.test
+package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
@@ -12,8 +12,6 @@ import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.JimmerDDDException
-import org.morecup.jimmerddd.core.aggregateproxy.DelegatedMutableListCache
-import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy

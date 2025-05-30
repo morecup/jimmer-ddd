@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.core.aggregateproxy.test
+package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.ImmutableSpi
@@ -12,7 +12,7 @@ class ProxyContext<T,P>(
 ) {
     private val spiBase = base as ImmutableSpi
     private val draftContext = DraftContext(null)
-    private val draftChangeProxy = DraftChangeProxy(spiBase, draftContext,implInterfaceClass,findByIdFunction)
+    private val draftChangeProxy = DraftChangeProxy(spiBase, draftContext, implInterfaceClass, findByIdFunction)
 
     fun <R> execute(processor: (P) -> R): Pair<T, R> {
         val proxy = draftChangeProxy.proxy as P
