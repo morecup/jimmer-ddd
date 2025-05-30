@@ -12,12 +12,12 @@ import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.JimmerDDDException
-import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy.Companion.log
 import org.morecup.jimmerddd.core.aggregateproxy.DelegatedMutableListCache
 import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy
+import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -28,6 +28,10 @@ class DraftChangeProxy(
     private val proxyClass: Class<*>,
     private val findByIdFunction: FindByIdFunction = JimmerDDDConfig.getFindByIdFunction()
 ) {
+    companion object{
+        private val log = LoggerFactory.getLogger(DraftChangeProxy::class.java)
+    }
+
     private val type = spi.__type()
     private val propNames = type.props.keys
     private val tempDraft = draftContext.toDraftObject<Any>(spi).let { it as DraftSpi }
