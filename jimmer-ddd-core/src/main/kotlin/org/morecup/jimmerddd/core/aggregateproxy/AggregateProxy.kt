@@ -12,4 +12,11 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         return context.execute(implProcessor)
     }
+
+    // 新增支持多个不同类型 base 的方法
+    fun <R> execMulti(vararg bases: Any, implProcessor: (P) -> R): Pair<List<Any>, R> {
+        val arrayBases = arrayListOf(bases)
+        val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
+        return context.execute(implProcessor)
+    }
 }

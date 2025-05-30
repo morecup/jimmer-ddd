@@ -50,7 +50,7 @@ interface Order : BaseEntity {
     val payment: Payment?
 
     @OneToMany(mappedBy = "order")
-//    @Lazy
+    @Lazy
     val aftermarketList: List<Aftermarket>
 
     @Transient

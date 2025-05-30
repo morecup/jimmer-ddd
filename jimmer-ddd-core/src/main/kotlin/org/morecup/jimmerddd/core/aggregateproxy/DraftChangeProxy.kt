@@ -12,7 +12,6 @@ import org.babyfish.jimmer.runtime.ListDraft
 import org.babyfish.jimmer.sql.collection.MutableIdViewList
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
 import org.morecup.jimmerddd.core.FindByIdFunction
-import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.JimmerDDDException
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
@@ -23,28 +22,41 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import kotlin.jvm.java
 
-class DraftChangeProxy(
-    private val spi: ImmutableSpi,
+internal class DraftChangeProxy(
+    private val spiList: List<ImmutableSpi>,
     private val draftContext: DraftContext,
     private val proxyClass: Class<*>,
-    private val findByIdFunction: FindByIdFunction = JimmerDDDConfig.getFindByIdFunction()
+    private val findByIdFunction: FindByIdFunction,
+    private val isSingle: Boolean = spiList.size == 1
 ) {
+    constructor(spi: ImmutableSpi,draftContext: DraftContext,proxyClass: Class<*>, findByIdFunction: FindByIdFunction)
+            : this(arrayListOf(spi),draftContext,proxyClass,findByIdFunction)
+
     companion object{
         private val log = LoggerFactory.getLogger(DraftChangeProxy::class.java)
     }
 
-    private val type = spi.__type()
-    private val propNames = type.props.keys
-    private val tempDraft = draftContext.toDraftObject<Any>(spi).let { it as DraftSpi }
+    private val propNameDraftManager = PropNameDraftManager(spiList,draftContext)
 
     /**
      * 变更后的草稿对象，用于存储变更后的属性值。
      */
-    val changedDraft = type.draftFactory.apply(draftContext, null).let {
-        it as DraftSpi
-        it.__set(type.idProp.id,tempDraft.__get(type.idProp.id))
-        it
+    fun getSingleChangedDraft(): DraftSpi{
+        return if (isSingle){
+            propNameDraftManager.changedDraftList[0]
+        }else{
+            throw JimmerDDDException("DraftChangeProxy有多个ChangedDraft，无法获取单个ChangedDraft,spi:$spiList")
+        }
     }
+
+    fun getMultiChangedDraft(): List<DraftSpi>{
+        return if (isSingle){
+            throw JimmerDDDException("DraftChangeProxy只有一个ChangedDraft，无法获取多个ChangedDraft,spi:$spiList")
+        }else{
+            propNameDraftManager.changedDraftList
+        }
+    }
+
     private val propertiesLazyHasLoadMap = mutableMapOf<String, Boolean>()
     //属性是否已经加载过的map
     private val propertiesHasSetMap = mutableMapOf<String, Boolean>()
@@ -62,12 +74,16 @@ class DraftChangeProxy(
                 ProxyInvocationHandler()
             )
         }else{
-            val proxyClassDraft = spi::class.java.declaringClass.declaringClass
-            return Proxy.newProxyInstance(
-                proxyClassDraft.classLoader,
-                arrayOf(proxyClassDraft, DraftSpi::class.java),
-                ProxyInvocationHandler()
-            )
+            if (isSingle){
+                val proxyClassDraft = spiList[0]::class.java.declaringClass.declaringClass
+                return Proxy.newProxyInstance(
+                    proxyClassDraft.classLoader,
+                    arrayOf(proxyClassDraft, DraftSpi::class.java),
+                    ProxyInvocationHandler()
+                )
+            }else{
+                throw JimmerDDDException("暂不支持关联对象为多表映射的聚合")
+            }
         }
     }
 
@@ -81,10 +97,10 @@ class DraftChangeProxy(
                 return null
             }
 //            // 添加对 hashCode() 方法的处理
-//            if (method.name == "hashCode" && method.parameterCount == 0) {
-//                return System.identityHashCode(proxy)
-//            }
-            return method.invoke(changedDraft, *args.orEmpty())
+            if (method.name == "hashCode" && method.parameterCount == 0) {
+                return System.identityHashCode(proxy)
+            }
+            return method.invoke(propNameDraftManager.changedDraftList[0], *args.orEmpty())
         }
 
         private fun toGetterPropNameOrNull(method: Method): String? {
@@ -99,7 +115,7 @@ class DraftChangeProxy(
                 } else {
                     methodName
                 }
-                if (propNames.contains(propName)){
+                if (propNameDraftManager.contains(propName)){
                     return propName
                 }
             }
@@ -112,7 +128,7 @@ class DraftChangeProxy(
                 if (methodName.startsWith("set")) {
                     var propName = methodName.substring(3)
                         .replaceFirstChar { it.lowercase() }
-                    if (propNames.contains(propName)){
+                    if (propNameDraftManager.contains(propName)){
                         return propName
                     }
                 }
@@ -121,7 +137,7 @@ class DraftChangeProxy(
         }
 
         private fun handleGetter(propName: String,ignoreNotAggregatedField:Boolean = false): Any? {
-            val prop = type.props[propName]!!
+            val prop = propNameDraftManager.getPropByName(propName)
             val lazy = prop.getAnnotation(Lazy::class.java)
             val hasLoad: Boolean = propertiesLazyHasLoadMap.getOrDefault(propName, false)
             if (lazy != null && !hasLoad){
@@ -156,7 +172,7 @@ class DraftChangeProxy(
         }
 
         private fun handleSetter(propName: String, value: Any?,ignoreNotAggregatedField:Boolean = false) {
-            val prop = type.props[propName]!!
+            val prop = propNameDraftManager.getPropByName(propName)
             val lazy = prop.getAnnotation(Lazy::class.java)
             if (lazy != null) {
                 propertiesLazyHasLoadMap.put(propName, true)
@@ -185,15 +201,15 @@ class DraftChangeProxy(
             if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
                 val (proxyAssociationDraft, changedAssociationDraft) = buildAssociationDraft(value,prop.targetType.javaClass)
                 propertiesHasSetMap.put(propName,true)
-                tempDraft.__set(propName, proxyAssociationDraft)
-                changedDraft.__set(propName, changedAssociationDraft)
+                propNameDraftManager.setTempDraftPropValue(propName, proxyAssociationDraft)
+                propNameDraftManager.setChangedDraftPropValue(propName, changedAssociationDraft)
                 return
             }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!ignoreNotAggregatedField){
                 throw JimmerDDDException("不是聚合根的字段，不应该能够加载")
             }
         }
-        tempDraft.__set(propName, value)
-        changedDraft.__set(propName, value)
+        propNameDraftManager.setTempDraftPropValue(propName, value)
+        propNameDraftManager.setChangedDraftPropValue(propName, value)
     }
 
     private fun reloadAndGetField(prop: ImmutableProp,ignoreNotAggregatedField: Boolean = false): Any? {
@@ -205,8 +221,8 @@ class DraftChangeProxy(
                     val reloadValue = associationPropReloadValue(prop)
                     val (proxyAssociationDraft, changedAssociationDraft) = buildAssociationDraft(reloadValue,prop.targetType.javaClass)
                     propertiesHasSetMap.put(propName,true)
-                    tempDraft.__set(propName, proxyAssociationDraft)
-                    changedDraft.__set(propName, changedAssociationDraft)
+                    propNameDraftManager.setTempDraftPropValue(propName, proxyAssociationDraft)
+                    propNameDraftManager.setChangedDraftPropValue(propName, changedAssociationDraft)
                     return getField(propName)
                 }else if (aggregatedField.type == AggregationType.NON_AGGREGATED&&!ignoreNotAggregatedField){
                     throw JimmerDDDException("不是聚合根的字段，不应该能够懒加载")
@@ -214,7 +230,7 @@ class DraftChangeProxy(
             }
         }
         val reloadValue = aggregatePropReloadValue(prop)
-        tempDraft.__set(propName, reloadValue)
+        propNameDraftManager.setTempDraftPropValue(propName, reloadValue)
         return reloadValue
     }
 
@@ -226,11 +242,11 @@ class DraftChangeProxy(
                 if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY) {
 //                    如果没有加载过，就加载并设置
                     if (!propertiesHasSetMap.getOrDefault(propName, false)) {
-                        val tempDraftValue = tempDraft.__get(propName)
+                        val tempDraftValue = propNameDraftManager.getTempDraftPropValue(propName)
                         val (proxyAssociationDraft, changedAssociationDraft) = buildAssociationDraft(tempDraftValue,prop.targetType.javaClass)
                         propertiesHasSetMap.put(propName, true)
-                        tempDraft.__set(propName, proxyAssociationDraft)
-                        changedDraft.__set(propName, changedAssociationDraft)
+                        propNameDraftManager.setTempDraftPropValue(propName, proxyAssociationDraft)
+                        propNameDraftManager.setChangedDraftPropValue(propName, changedAssociationDraft)
                     }
                     return getField(propName)
                 } else if (aggregatedField.type == AggregationType.NON_AGGREGATED && !ignoreNotAggregatedField) {
@@ -238,33 +254,35 @@ class DraftChangeProxy(
                 }
             }
         }
-        return tempDraft.__get(propName)
+        return propNameDraftManager.getTempDraftPropValue(propName)
     }
 
     private fun associationPropReloadValue(loadProp: ImmutableProp): Any {
+        val type = loadProp.declaringType
         val targetFetcher = FetcherImpl(loadProp.targetType.javaClass).allAggregationFields(arrayListOf(type.javaClass))
         val fetcherImplementor = FetcherImpl(type.javaClass).add(loadProp.name,targetFetcher)
-        val idValue = spi.__get(type.idProp.id)
+        val idValue = propNameDraftManager.getIdPropValue(loadProp.name)
         val haveLazyListPropBase = findByIdFunction(fetcherImplementor, idValue) as ImmutableSpi
         return haveLazyListPropBase.__get(loadProp.id)
     }
 
     private fun aggregatePropReloadValue(loadProp: ImmutableProp): Any? {
+        val type = loadProp.declaringType
         val fetcherImplementor = FetcherImpl(type.javaClass).add(loadProp.name)
-        val idValue = spi.__get(type.idProp.id)
+        val idValue = propNameDraftManager.getIdPropValue(loadProp.name)
         val haveLazyListPropBase = findByIdFunction(fetcherImplementor, idValue) as ImmutableSpi
         return haveLazyListPropBase.__get(loadProp.id)
     }
 
     private fun getField(propName: String): Any? {
-        val tempDraftValue = tempDraft.__get(propName)
-        val changedDraftValue = changedDraft.__get(propName)
+        val tempDraftValue = propNameDraftManager.getTempDraftPropValue(propName)
+        val changedDraftValue = propNameDraftManager.getChangedDraftPropValue(propName)
         if (tempDraftValue is ListDraft<*> && changedDraftValue is ListDraft<*>) {
             val delegatedMutableList =
                 DelegatedMutableListCache.getOrPut(tempDraftValue, changedDraftValue as ListDraft<Any>)
             return delegatedMutableList
         } else {
-            return tempDraft.__get(propName)
+            return propNameDraftManager.getTempDraftPropValue(propName)
         }
     }
 
@@ -275,13 +293,13 @@ class DraftChangeProxy(
         when (value){
             is ImmutableSpi -> {
                 val draftChangeProxy = DraftChangeProxy(value, draftContext, proxyClass, findByIdFunction)
-                return AssociationDraft(draftChangeProxy.proxy,draftChangeProxy.changedDraft)
+                return AssociationDraft(draftChangeProxy.proxy, draftChangeProxy.getSingleChangedDraft())
             }
             is MutableList<*> -> {
                 val newList = value.mapNotNull { item ->
                     DraftChangeProxy(item!! as ImmutableSpi,draftContext,proxyClass,findByIdFunction)
                 }
-                return AssociationDraft(newList.map { it.proxy }.toMutableList(),newList.map { it.changedDraft }.toMutableList())
+                return AssociationDraft(newList.map { it.proxy }.toMutableList(),newList.map { it.getSingleChangedDraft() }.toMutableList())
             }
             else -> throw JimmerDDDException("buildProxyDraft ${value.let{it::class.simpleName}} not supported")
         }
