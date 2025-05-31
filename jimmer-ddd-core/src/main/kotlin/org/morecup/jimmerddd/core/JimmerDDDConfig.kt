@@ -6,11 +6,14 @@ import org.babyfish.jimmer.sql.meta.UserIdGenerator
 typealias FindByIdFunction = (Fetcher<*>, Any) -> Any?
 typealias SaveEntityFunction = (Any) -> Any
 
+typealias EventPublishFunction = (Any) -> Unit
+
 object JimmerDDDConfig {
 
     private var findByIdFunction:FindByIdFunction? = null
     private var saveEntityFunction: SaveEntityFunction? = null
     private var userIdGenerator:UserIdGenerator<*>? = null
+    private var eventPublishFunction: EventPublishFunction? = null
 
     @JvmStatic
     fun setFindByIdFunction(findByIdFunction: FindByIdFunction) {
@@ -47,5 +50,17 @@ object JimmerDDDConfig {
             throw JimmerDDDException("JimmerDDDConfig.userIdGenerator未配置，请配置成对应jimmer sqlClient userIdGenerator的逻辑")
         }
         return userIdGenerator!!
+    }
+
+    @JvmStatic
+    fun setEventPublishFunction(eventPublishFunction: EventPublishFunction) {
+        this.eventPublishFunction = eventPublishFunction
+    }
+
+    internal fun getEventPublishFunction(): EventPublishFunction {
+        if (eventPublishFunction == null) {
+            throw JimmerDDDException("JimmerDDDConfig.eventPublishFunction未配置，请配置成对应jimmer sqlClient getEventPublishFunction的逻辑")
+        }
+        return eventPublishFunction!!
     }
 }

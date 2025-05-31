@@ -13,15 +13,20 @@ internal class ProxyContext<T,P>(
     private val spiBase = base as ImmutableSpi
     private val draftContext = DraftContext(null)
     private val singleSpiPropNameManager = SingleSpiPropNameManager(spiBase,draftContext)
-    private val entityProxy = AggregationProxy(singleSpiPropNameManager, draftContext, implInterfaceClass, findByIdFunction)
+    private val aggregationProxy = AggregationProxy(singleSpiPropNameManager, draftContext, implInterfaceClass, findByIdFunction)
 
-    fun <R> execute(processor: (P) -> R): Pair<T, R> {
-        val proxy = entityProxy.proxy as P
+    fun <R> execute(processor: (P) -> R): ProxyResult<T, R> {
+        val proxy = aggregationProxy.proxy as P
         val result = usingDraftContext(draftContext){
             processor(proxy)
         }
         val changed = singleSpiPropNameManager.changedDraft.__resolve()
         draftContext.dispose()
-        return changed as T to result
+        return ProxyResult(changed as T , result , aggregationProxy.lazyPublishEventList)
     }
 }
+data class ProxyResult<T,P>(
+    val changed: T,
+    val result: P,
+    val lazyPublishEventList: List<Any>
+)
