@@ -4,8 +4,8 @@ plugins {
 
 
 dependencies {
-    api(project(":jimmer-ddd-core"))
-    compileOnly(libs.jimmer.sql)
+    api(project(":jimmer-ddd-kotlin"))
+    compileOnly(libs.jimmer.spring.boot.starter)
     testImplementation(kotlin("test"))
 }
 
