@@ -11,6 +11,7 @@ import org.babyfish.jimmer.sql.OneToOne
 import org.babyfish.jimmer.sql.Table
 import org.babyfish.jimmer.sql.Transient
 import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy
+import org.morecup.jimmerddd.core.aggregateproxy.EventHandler
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
@@ -80,7 +81,7 @@ class OrderUtil {
 val orderAggregateProxy = AggregateProxy(OrderDraft::class.java)
 //val orderAggregateProxy1 = AggregateProxy1(OrderDraft::class.java)
 
-class OrderImpl(order: OrderDraft) : OrderDraft by order {
+class OrderImpl(order: OrderDraft) : OrderDraft by order, EventHandler by order as EventHandler {
 
     fun removeAftermarket(reason: String):Boolean {
         val list = aftermarketList()

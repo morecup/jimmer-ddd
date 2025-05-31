@@ -35,10 +35,10 @@ internal open class AggregationProxy(
 }
 
 interface EventHandler {
-    fun publish(event: Any)
+    fun publishEvent(event: Any)
 
-    fun lazyPublish(event: Any)
+    fun lazyPublishEvent(event: Any)
 }
 
-private val publishMethod = EventHandler::class.java.getMethod("publish", Any::class.java);
-private val lazyPublishMethod = EventHandler::class.java.getMethod("lazyPublish", Any::class.java);
+private val publishMethod = EventHandler::class.java.getMethod("publishEvent", Any::class.java);
+private val lazyPublishMethod = EventHandler::class.java.getMethod("lazyPublishEvent", Any::class.java);
