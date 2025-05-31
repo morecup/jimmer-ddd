@@ -12,14 +12,14 @@ internal class ProxyContext<T,P>(
 ) {
     private val spiBase = base as ImmutableSpi
     private val draftContext = DraftContext(null)
-    private val draftChangeProxy = DraftChangeProxy(spiBase, draftContext, implInterfaceClass, findByIdFunction)
+    private val entityProxy = EntityProxy(spiBase, draftContext, implInterfaceClass, findByIdFunction)
 
     fun <R> execute(processor: (P) -> R): Pair<T, R> {
-        val proxy = draftChangeProxy.proxy as P
+        val proxy = entityProxy.proxy as P
         val result = usingDraftContext(draftContext){
             processor(proxy)
         }
-        val changed = draftChangeProxy.getSingleChangedDraft().__resolve()
+        val changed = entityProxy.getSingleChangedDraft().__resolve()
         draftContext.dispose()
         return changed as T to result
     }

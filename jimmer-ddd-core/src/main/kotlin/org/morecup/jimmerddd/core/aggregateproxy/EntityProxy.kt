@@ -22,7 +22,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import kotlin.jvm.java
 
-internal class DraftChangeProxy(
+internal class EntityProxy(
     private val spiList: List<ImmutableSpi>,
     private val draftContext: DraftContext,
     private val proxyClass: Class<*>,
@@ -32,7 +32,7 @@ internal class DraftChangeProxy(
             : this(arrayListOf(spi),draftContext,proxyClass,findByIdFunction)
 
     companion object{
-        private val log = LoggerFactory.getLogger(DraftChangeProxy::class.java)
+        private val log = LoggerFactory.getLogger(EntityProxy::class.java)
     }
 
     private val propNameDraftManager = PropNameDraftManager(spiList,draftContext)
@@ -293,12 +293,12 @@ internal class DraftChangeProxy(
         }
         when (value){
             is ImmutableSpi -> {
-                val draftChangeProxy = DraftChangeProxy(value, draftContext, proxyClass, findByIdFunction)
-                return AssociationDraft(draftChangeProxy.proxy, draftChangeProxy.getSingleChangedDraft())
+                val entityProxy = EntityProxy(value, draftContext, proxyClass, findByIdFunction)
+                return AssociationDraft(entityProxy.proxy, entityProxy.getSingleChangedDraft())
             }
             is MutableList<*> -> {
                 val newList = value.mapNotNull { item ->
-                    DraftChangeProxy(item!! as ImmutableSpi,draftContext,proxyClass,findByIdFunction)
+                    EntityProxy(item!! as ImmutableSpi,draftContext,proxyClass,findByIdFunction)
                 }
                 return AssociationDraft(newList.map { it.proxy }.toMutableList(),newList.map { it.getSingleChangedDraft() }.toMutableList())
             }
