@@ -1,19 +1,18 @@
 package org.morecup.jimmerddd.core
 
 import org.babyfish.jimmer.sql.fetcher.Fetcher
-import org.babyfish.jimmer.sql.meta.UserIdGenerator
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 
 typealias FindByIdFunction = (Fetcher<*>, Any) -> Any?
 typealias SaveEntityFunction = (Any) -> Any
-
+typealias IdGeneratorFunction = (entityType: Class<*>) -> Any?
 typealias EventPublishFunction = (Any) -> Unit
 
 object JimmerDDDConfig {
 
     private var findByIdFunction:FindByIdFunction? = null
     private var saveEntityFunction: SaveEntityFunction? = null
-    private var userIdGenerator:UserIdGenerator<*>? = null
+    private var idGeneratorFunction:IdGeneratorFunction? = null
     private var eventPublishFunction: EventPublishFunction? = null
 
     @JvmStatic
@@ -42,15 +41,15 @@ object JimmerDDDConfig {
     }
 
     @JvmStatic
-    fun setUserIdGenerator(userIdGenerator: UserIdGenerator<*>) {
-        this.userIdGenerator = userIdGenerator
+    fun setIdGeneratorFunction(idGeneratorFunction: IdGeneratorFunction) {
+        this.idGeneratorFunction = idGeneratorFunction
     }
 
-    internal fun getUserIdGenerator(): UserIdGenerator<*> {
-        if (userIdGenerator == null) {
+    internal fun getIdGeneratorFunction(): IdGeneratorFunction {
+        if (idGeneratorFunction == null) {
             throw JimmerDDDException("JimmerDDDConfig.userIdGenerator未配置，请配置成对应jimmer sqlClient userIdGenerator的逻辑")
         }
-        return userIdGenerator!!
+        return idGeneratorFunction!!
     }
 
     @JvmStatic

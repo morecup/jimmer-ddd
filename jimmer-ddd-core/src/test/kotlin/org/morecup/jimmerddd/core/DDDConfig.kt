@@ -3,6 +3,7 @@ package org.morecup.jimmerddd.core
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.KSqlClient
+import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.domain.SnowflakeIdGenerator
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Configuration
@@ -29,6 +30,7 @@ open class DDDConfig(
         }
         JimmerDDDConfig.setEventPublishFunction(applicationContext::publishEvent)
         // 配置 JimmerDDDConfig 的 saveEntitiesFunction
-        JimmerDDDConfig.setUserIdGenerator(SnowflakeIdGenerator())
+        val snowflakeIdGenerator: SnowflakeIdGenerator = SnowflakeIdGenerator()
+        JimmerDDDConfig.setIdGeneratorFunction { entityType -> snowflakeIdGenerator.generate(entityType) }
     }
 }

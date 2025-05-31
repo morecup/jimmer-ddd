@@ -5,7 +5,7 @@ import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
 import org.babyfish.jimmer.runtime.Internal
 import org.babyfish.jimmer.runtime.NonSharedList
-import org.morecup.jimmerddd.core.JimmerDDDConfig.getUserIdGenerator
+import org.morecup.jimmerddd.core.JimmerDDDConfig.getIdGeneratorFunction
 
 fun <T> baseAssociatedFixed(base:T,autoAddListId: Boolean = true): T {
     val immutable = base
@@ -26,7 +26,7 @@ fun <T> baseAssociatedFixed(base:T,autoAddListId: Boolean = true): T {
 
                             if (!itemSpi.__isLoaded(itemIdPropId)&&autoAddListId){
                                 val newItem = Internal.produce(prop.targetType, itemSpi){
-                                    (it as DraftSpi).__set(itemIdPropId, getUserIdGenerator().generate(prop.targetType.javaClass))
+                                    (it as DraftSpi).__set(itemIdPropId, getIdGeneratorFunction().invoke(prop.targetType.javaClass))
                                 }
                                 return@mapNotNull baseAssociatedFixed(newItem,true)
                             }

@@ -9,9 +9,10 @@ import org.springframework.context.event.EventListener
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.morecup.jimmerddd.core.JimmerDDDConfig
+import org.morecup.jimmerddd.kotlin.spring.aggregateproxy.generatorId
 
 @AutoConfiguration(after = [JimmerAutoConfiguration::class])
-open class KotlinJimmerDDDConfig(
+open class KotlinJimmerDDDConfiguration(
     private val kSqlClient: KSqlClient,
     private val applicationContext: ApplicationContext
 ) {
@@ -27,7 +28,9 @@ open class KotlinJimmerDDDConfig(
             kSqlClient.save(entity, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE).modifiedEntity
         }
         JimmerDDDConfig.setEventPublishFunction(applicationContext::publishEvent)
-        // 配置 JimmerDDDConfig 的 saveEntitiesFunction
-//        JimmerDDDConfig.setUserIdGenerator(SnowflakeIdGenerator())
+
+        JimmerDDDConfig.setIdGeneratorFunction {
+            generatorId(kSqlClient,it)
+        }
     }
 }
