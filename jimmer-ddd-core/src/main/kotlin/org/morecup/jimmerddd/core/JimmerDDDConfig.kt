@@ -65,7 +65,7 @@ object JimmerDDDConfig {
         return eventPublishFunction!!
     }
 
-    fun publishEvent(event: Any) {
+    internal fun publishEvent(event: Any) {
         nullDraftContext {
             getEventPublishFunction().invoke(event)
         }
