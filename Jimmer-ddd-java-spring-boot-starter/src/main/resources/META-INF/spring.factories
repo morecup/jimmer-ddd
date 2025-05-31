@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.morecup.jimmerddd.java.spring.config.JavaJimmerDDDConfiguration

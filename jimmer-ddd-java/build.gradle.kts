@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     compileOnly(libs.jimmer.sql)
-    implementation(project(":jimmer-ddd-core"))
+    api(project(":jimmer-ddd-core"))
 }
 
 tasks.test {

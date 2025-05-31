@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     compileOnly(libs.jimmer.spring.boot.starter)
-    implementation(project(":jimmer-ddd-java"))
+    api(project(":jimmer-ddd-java"))
 }
 
 tasks.test {

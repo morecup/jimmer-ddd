@@ -6,7 +6,12 @@ import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 typealias FindByIdFunction = (Fetcher<*>, Any) -> Any?
 typealias SaveEntityFunction = (Any) -> Any
 typealias IdGeneratorFunction = (entityType: Class<*>) -> Any?
-typealias EventPublishFunction = (Any) -> Unit
+//typealias EventPublishFunction = (Any) -> Unit
+
+@FunctionalInterface
+fun interface EventPublishFunction {
+    fun publish(event: Any)
+}
 
 object JimmerDDDConfig {
 
@@ -66,7 +71,7 @@ object JimmerDDDConfig {
 
     internal fun publishEvent(event: Any) {
         nullDraftContext {
-            getEventPublishFunction().invoke(event)
+            getEventPublishFunction().publish(event)
         }
     }
 }
