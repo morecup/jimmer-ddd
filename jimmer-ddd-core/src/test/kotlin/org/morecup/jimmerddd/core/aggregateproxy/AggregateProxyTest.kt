@@ -29,7 +29,6 @@ import org.morecup.jimmerddd.core.domain.order.dto.CreateOrderCmd
 import org.morecup.jimmerddd.core.domain.order.fetchBy
 import org.morecup.jimmerddd.core.domain.order.id
 import org.morecup.jimmerddd.core.domain.order.orderAggregateProxy
-import org.morecup.jimmerddd.core.domain.order.orderAggregateProxy1
 import org.morecup.jimmerddd.core.domain.order.testOrderId
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo
 import org.morecup.jimmerddd.core.preanalysis.analysisMethodFetcher
@@ -87,7 +86,7 @@ class AggregateProxyTest {
             OrderImpl(impl).addAftermarket("新的售后原因")
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
         println(result.toString())
     }
 
@@ -99,7 +98,7 @@ class AggregateProxyTest {
             OrderImpl(impl).renameUserDetailMsg()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
     @Test
@@ -126,7 +125,7 @@ class AggregateProxyTest {
             OrderImpl(impl).renameUserDetailMsg()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
 
@@ -138,7 +137,7 @@ class AggregateProxyTest {
             OrderImpl(impl).seeIdView()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
     @Test
@@ -149,7 +148,7 @@ class AggregateProxyTest {
             OrderImpl(impl).setIdView()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
     @Test
@@ -160,7 +159,7 @@ class AggregateProxyTest {
             OrderImpl(impl).seeIdOnly()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
     @Test
@@ -171,7 +170,7 @@ class AggregateProxyTest {
             OrderImpl(impl).setIdOnly()
         }
         println(changedDraft)
-        repository.saveOrder(changedDraft.toAssociatedFixed())
+        repository.saveOrder(baseAssociatedFixed(changedDraft))
     }
 
     @Test
