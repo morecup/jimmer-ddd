@@ -25,7 +25,7 @@ internal class SingleSpiPropNameManager(
     }
 
     override fun getPropByName(propName: String):ImmutableProp{
-        return getPropByName(propName)
+        return type.getProp(propName)
     }
 
     override fun contains(propName: String): Boolean {

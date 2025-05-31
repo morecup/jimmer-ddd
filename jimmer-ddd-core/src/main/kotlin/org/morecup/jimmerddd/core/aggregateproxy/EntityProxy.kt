@@ -171,10 +171,10 @@ internal open class EntityProxy(
                 handleSetter(prop.idViewBaseProp.name,value?.let {
                     when (it){
                         is List<*> -> {
-                            it.map { makeIdOnly(prop.targetType,it) as Any? }
+                            it.map { makeIdOnly(prop.idViewBaseProp.targetType,it) as Any? }
                         }
                         else -> {
-                            makeIdOnly(prop.targetType,it)
+                            makeIdOnly(prop.idViewBaseProp.targetType,it)
                         }
                     }
                 },true)

@@ -13,7 +13,7 @@ internal class ProxyContext<T,P>(
     private val spiBase = base as ImmutableSpi
     private val draftContext = DraftContext(null)
     private val singleSpiPropNameManager = SingleSpiPropNameManager(spiBase,draftContext)
-    private val entityProxy = EntityProxy(spiBase, draftContext, implInterfaceClass, findByIdFunction)
+    private val entityProxy = AggregationProxy(singleSpiPropNameManager, draftContext, implInterfaceClass, findByIdFunction)
 
     fun <R> execute(processor: (P) -> R): Pair<T, R> {
         val proxy = entityProxy.proxy as P
