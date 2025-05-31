@@ -4,6 +4,7 @@ import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig.getEventPublishFunction
+import org.morecup.jimmerddd.core.JimmerDDDConfig.publishEvent
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
@@ -25,7 +26,7 @@ internal open class AggregationProxy(
 
     override fun handleOtherMethod(proxy: Any, method: Method, args: Array<Any>?): Pair<Boolean,Any?> {
         if (method == publishMethod){
-            getEventPublishFunction().invoke(args!![0])
+            publishEvent(args!![0])
         }else if (method == lazyPublishMethod){
             lazyPublishEventList.add(args!![0])
         }

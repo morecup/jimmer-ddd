@@ -2,7 +2,7 @@ package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
-import org.morecup.jimmerddd.core.JimmerDDDConfig.getEventPublishFunction
+import org.morecup.jimmerddd.core.JimmerDDDConfig.publishEvent
 import org.morecup.jimmerddd.core.SaveEntityFunction
 
 class AggregateProxy<P : Any> @JvmOverloads constructor(
@@ -21,7 +21,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
         saveEntityFunction.invoke(baseAssociatedFixed(changed!!))
         lazyPublishEventList.forEach {
-            getEventPublishFunction().invoke(it)
+            publishEvent(it)
         }
         return result
     }
@@ -48,7 +48,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
         changed.forEach { saveEntityFunction.invoke(baseAssociatedFixed(it)) }
-        lazyPublishEventList.forEach { getEventPublishFunction().invoke(it) }
+        lazyPublishEventList.forEach { publishEvent(it) }
         return result
     }
 }
