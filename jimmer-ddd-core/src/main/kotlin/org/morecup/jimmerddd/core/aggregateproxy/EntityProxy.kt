@@ -1,6 +1,7 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.Draft
+import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.ImmutableType
@@ -22,40 +23,24 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import kotlin.jvm.java
 
-internal class EntityProxy(
-    private val spiList: List<ImmutableSpi>,
+internal open class EntityProxy(
+    private val propNameDraftManager:IPropNameDraftManager,
     private val draftContext: DraftContext,
     private val proxyClass: Class<*>,
     private val findByIdFunction: FindByIdFunction
 ) {
     constructor(spi: ImmutableSpi,draftContext: DraftContext,proxyClass: Class<*>, findByIdFunction: FindByIdFunction)
-            : this(arrayListOf(spi),draftContext,proxyClass,findByIdFunction)
+            : this(SingleSpiPropNameManager(spi,draftContext),draftContext,proxyClass,findByIdFunction)
 
     companion object{
         private val log = LoggerFactory.getLogger(EntityProxy::class.java)
     }
 
-    private val propNameDraftManager = PropNameDraftManager(spiList,draftContext)
-
-    private val isSingle: Boolean = spiList.size == 1
-
     /**
      * 变更后的草稿对象，用于存储变更后的属性值。
      */
     fun getSingleChangedDraft(): DraftSpi{
-        return if (isSingle){
-            propNameDraftManager.changedDraftList[0]
-        }else{
-            throw JimmerDDDException("DraftChangeProxy有多个ChangedDraft，无法获取单个ChangedDraft,spi:$spiList")
-        }
-    }
-
-    fun getMultiChangedDraft(): List<DraftSpi>{
-        return if (isSingle){
-            throw JimmerDDDException("DraftChangeProxy只有一个ChangedDraft，无法获取多个ChangedDraft,spi:$spiList")
-        }else{
-            propNameDraftManager.changedDraftList
-        }
+        return propNameDraftManager.changedDraft
     }
 
     private val propertiesLazyHasLoadMap = mutableMapOf<String, Boolean>()
@@ -67,7 +52,7 @@ internal class EntityProxy(
      */
     val proxy: Any by lazy { createProxy() }
 
-    private fun createProxy(): Any {
+    protected open fun createProxy(): Any {
         if (Draft::class.java.isAssignableFrom(proxyClass)){
             return Proxy.newProxyInstance(
                 proxyClass.classLoader,
@@ -75,17 +60,17 @@ internal class EntityProxy(
                 ProxyInvocationHandler()
             )
         }else{
-            if (isSingle){
-                val proxyClassDraft = spiList[0]::class.java.declaringClass.declaringClass
-                return Proxy.newProxyInstance(
-                    proxyClassDraft.classLoader,
-                    arrayOf(proxyClassDraft, DraftSpi::class.java),
-                    ProxyInvocationHandler()
-                )
-            }else{
-                throw JimmerDDDException("暂不支持关联对象为多表映射的聚合")
-            }
+            val proxyClassDraft = propNameDraftManager.proxyClass
+            return Proxy.newProxyInstance(
+                proxyClassDraft.classLoader,
+                arrayOf(proxyClassDraft, DraftSpi::class.java),
+                ProxyInvocationHandler()
+            )
         }
+    }
+
+    protected open fun handleOtherMethod(proxy: Any, method: Method, args: Array<Any>?): Pair<Boolean,Any?> {
+        return false to null
     }
 
     inner class ProxyInvocationHandler : InvocationHandler {
@@ -101,7 +86,11 @@ internal class EntityProxy(
             if (method.name == "hashCode" && method.parameterCount == 0) {
                 return System.identityHashCode(proxy)
             }
-            return method.invoke(propNameDraftManager.changedDraftList[0], *args.orEmpty())
+            val (success, result) = handleOtherMethod(proxy, method, args)
+            if (success) {
+                return result
+            }
+            return method.invoke(propNameDraftManager.changedDraft, *args.orEmpty())
         }
 
         private fun toGetterPropNameOrNull(method: Method): String? {

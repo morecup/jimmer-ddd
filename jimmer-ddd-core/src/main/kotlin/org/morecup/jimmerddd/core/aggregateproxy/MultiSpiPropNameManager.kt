@@ -5,10 +5,10 @@ import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.runtime.ImmutableSpi
 
-internal class PropNameDraftManager(
+internal class MultiSpiPropNameManager(
     private val spiList: List<ImmutableSpi>,
     private val draftContext: DraftContext,
-) {
+): IPropNameDraftManager {
     private val propNameDraftInfoMap = mutableMapOf<String, PropNameDraftInfo>()
 
     val changedDraftList = mutableListOf<DraftSpi>()
@@ -30,6 +30,13 @@ internal class PropNameDraftManager(
         }
     }
 
+    override val proxyClass: Class<*> by lazy {
+        return@lazy spiList[0]::class.java.declaringClass.declaringClass
+    }
+
+    override val changedDraft: DraftSpi
+        get() = changedDraftList[0]
+
     data class PropNameDraftInfo(
         val spi: ImmutableSpi,
         val tempDraft: DraftSpi,
@@ -41,31 +48,31 @@ internal class PropNameDraftManager(
         return propNameDraftInfoMap[propName]!!
     }
 
-    fun getPropByName(propName: String):ImmutableProp{
+    override fun getPropByName(propName: String):ImmutableProp{
         return getPropNameDraftInfo(propName).prop
     }
 
-    fun contains(propName: String): Boolean {
+    override fun contains(propName: String): Boolean {
         return propNameDraftInfoMap.containsKey(propName)
     }
 
-    fun setTempDraftPropValue(propName:String, value:Any?){
+    override fun setTempDraftPropValue(propName:String, value:Any?){
         getPropNameDraftInfo(propName).tempDraft.__set(propName,value)
     }
 
-    fun setChangedDraftPropValue(propName:String, value:Any?){
+    override fun setChangedDraftPropValue(propName:String, value:Any?){
         getPropNameDraftInfo(propName).changedDraft.__set(propName,value)
     }
 
-    fun getTempDraftPropValue(propName:String):Any?{
+    override fun getTempDraftPropValue(propName:String):Any?{
         return getPropNameDraftInfo(propName).tempDraft.__get(propName)
     }
 
-    fun getChangedDraftPropValue(propName:String):Any?{
+    override fun getChangedDraftPropValue(propName:String):Any?{
         return getPropNameDraftInfo(propName).changedDraft.__get(propName)
     }
 
-    fun getIdPropValue(propName: String):Any{
+    override fun getIdPropValue(propName: String):Any{
         val propNameDraftInfo = getPropNameDraftInfo(propName)
         return propNameDraftInfo.spi.__get(propNameDraftInfo.spi.__type().idProp.id)
     }
