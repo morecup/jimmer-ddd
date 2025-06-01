@@ -5,7 +5,7 @@ import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.JimmerDDDConfig.publishEvent
 import org.morecup.jimmerddd.core.SaveEntityFunction
 
-class AggregateProxy<P : Any> @JvmOverloads constructor(
+open class AggregateProxy<P : Any> @JvmOverloads constructor(
     private val implInterfaceClass: Class<P>,
     private val findByIdFunction: FindByIdFunction = JimmerDDDConfig.getFindByIdFunction(),
     private val saveEntityFunction: SaveEntityFunction = JimmerDDDConfig.getSaveEntityFunction()

@@ -12,6 +12,7 @@ jimmer-spring-boot-starter = { module = "io.github.morecup:jimmer-spring-boot-st
 jimmer-ksp = { module = "io.github.morecup:jimmer-ksp", version.ref = "jimmerVersion" }
 jimmer-sql = { module = "io.github.morecup:jimmer-sql", version.ref = "jimmerVersion" }
 jimmer-sql-kotlin = { module = "io.github.morecup:jimmer-sql-kotlin", version.ref = "jimmerVersion" }
+jimmer-apt = { module = "io.github.morecup:jimmer-apt", version.ref = "jimmerVersion" }
 
 
 [plugins]

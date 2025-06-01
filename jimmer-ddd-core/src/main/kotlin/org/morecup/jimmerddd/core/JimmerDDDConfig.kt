@@ -31,14 +31,14 @@ object JimmerDDDConfig {
     }
 
     //    @JvmStatic
-    internal fun getFindByIdFunction():FindByIdFunction{
+    fun getFindByIdFunction():FindByIdFunction{
         if (findByIdFunction == null) {
             throw JimmerDDDException("JimmerDDDConfig.findByIdFunction未配置，请配置成对应jimmer sqlClient findById的逻辑")
         }
         return findByIdFunction!!
     }
 
-    internal fun getSaveEntityFunction(): SaveEntityFunction {
+    fun getSaveEntityFunction(): SaveEntityFunction {
         if (saveEntityFunction == null) {
             throw JimmerDDDException("JimmerDDDConfig.saveEntityFunction未配置，请配置成对应jimmer sqlClient saveEntity的逻辑")
         }
@@ -50,7 +50,7 @@ object JimmerDDDConfig {
         this.idGeneratorFunction = idGeneratorFunction
     }
 
-    internal fun getIdGeneratorFunction(): IdGeneratorFunction {
+    fun getIdGeneratorFunction(): IdGeneratorFunction {
         if (idGeneratorFunction == null) {
             throw JimmerDDDException("JimmerDDDConfig.userIdGenerator未配置，请配置成对应jimmer sqlClient userIdGenerator的逻辑")
         }
@@ -62,14 +62,14 @@ object JimmerDDDConfig {
         this.eventPublishFunction = eventPublishFunction
     }
 
-    internal fun getEventPublishFunction(): EventPublishFunction {
+    fun getEventPublishFunction(): EventPublishFunction {
         if (eventPublishFunction == null) {
             throw JimmerDDDException("JimmerDDDConfig.eventPublishFunction未配置，请配置成对应jimmer sqlClient getEventPublishFunction的逻辑")
         }
         return eventPublishFunction!!
     }
 
-    internal fun publishEvent(event: Any) {
+    fun publishEvent(event: Any) {
         nullDraftContext {
             getEventPublishFunction().publish(event)
         }
