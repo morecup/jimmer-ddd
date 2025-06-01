@@ -6,11 +6,11 @@ import org.morecup.jimmerddd.core.aggregateproxy.EventHandler;
 public interface GoodsImpl extends GoodsDraft, EventHandler {
     AggregateProxy<GoodsImpl> proxy = new AggregateProxy<>(GoodsImpl.class);
 
-    default String test() {
+    default void test() {
         System.out.println("test");
         System.out.println(name());
         setNowAddress("新地址");
         System.out.println(nowAddress());
-        return "testResult";
+//        return "testResult";
     }
 }

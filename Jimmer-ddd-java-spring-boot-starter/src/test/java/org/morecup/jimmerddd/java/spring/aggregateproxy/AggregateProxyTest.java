@@ -1,6 +1,7 @@
 package org.morecup.jimmerddd.java.spring.aggregateproxy;
 
 import org.babyfish.jimmer.sql.JSqlClient;
+import org.babyfish.jimmer.sql.fetcher.Fetcher;
 import org.junit.jupiter.api.Test;
 import org.morecup.jimmerddd.java.preanalysis.FunctionFetcher;
 import org.morecup.jimmerddd.java.spring.Application;
@@ -18,10 +19,19 @@ public class AggregateProxyTest {
 
     @Test
     void test() {
-        Goods goods = sql.findById(FunctionFetcher.of(Goods.class, GoodsImpl::test), testGoodsId);
-        String result = GoodsImpl.proxy.execAndSave(goods, impl -> {
-            return impl.test();
-        });
-        System.out.println(result);
+        // 输出当前Java版本
+        System.out.println("当前Java版本: " + System.getProperty("java.version"));
+        try {
+            Fetcher<Goods> goodsFetcher = FunctionFetcher.of(Goods.class, GoodsImpl::test);
+            Goods goods = sql.findById(goodsFetcher, testGoodsId);
+            String result = GoodsImpl.proxy.execAndSave(goods, impl -> {
+                impl.test();
+                return null;
+            });
+            System.out.println(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }

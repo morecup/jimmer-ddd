@@ -1,7 +1,6 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.Draft
-import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.ImmutableType
@@ -18,10 +17,10 @@ import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy
 import org.slf4j.LoggerFactory
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import kotlin.jvm.java
 
 internal open class EntityProxy(
     private val propNameDraftManager:IPropNameDraftManager,
@@ -86,11 +85,49 @@ internal open class EntityProxy(
             if (method.name == "hashCode" && method.parameterCount == 0) {
                 return System.identityHashCode(proxy)
             }
+            if (method.isDefault) {
+                // 对于默认方法，我们可以调用它的默认实现
+                // 使用MethodHandle来调用默认方法
+
+                return invokeDefaultMethod(proxy,method, args)
+            }
             val (success, result) = handleOtherMethod(proxy, method, args)
             if (success) {
                 return result
             }
             return method.invoke(propNameDraftManager.changedDraft, *args.orEmpty())
+        }
+        private val lookups = mutableMapOf<Class<*>, MethodHandles.Lookup>()
+
+        private fun invokeDefaultMethod(proxy:Any?, method:Method, args: Array<Any>?):Any? {
+            try {
+                val declaringClass = method.declaringClass
+
+                // 2. 获取或创建具有私有访问权限的Lookup
+                val lookup = lookups.getOrPut(declaringClass) {
+                    // 2.1 使用反射获取Lookup构造器
+                    val constructor = MethodHandles.Lookup::class.java
+                        .getDeclaredConstructor(Class::class.java)
+                        .apply { isAccessible = true } // 解决构造器访问限制
+
+                    // 2.2 创建具有正确访问权限的Lookup
+                    constructor.newInstance(declaringClass).`in`(declaringClass)
+                }
+
+                // 3. 创建方法句柄并调用
+                return lookup.unreflectSpecial(method, declaringClass)
+                    .bindTo(proxy)
+                    .let { handle ->
+                        when {
+                            args != null && args.isNotEmpty() -> handle.invokeWithArguments(*args)
+                            args != null -> handle.invoke() // 无参方法
+                            else -> handle.invoke() // 无参方法
+                        }
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                throw RuntimeException(e)
+            }
         }
 
         private fun toGetterPropNameOrNull(method: Method): String? {
@@ -113,7 +150,7 @@ internal open class EntityProxy(
         }
 
         private fun toSetterPropNameOrNull(method: Method): String? {
-            if (method.parameterCount == 1 && (method.returnType == Void.TYPE || method.returnType == Unit::class.java)) {
+            if (method.parameterCount == 1 && (method.returnType == Void.TYPE || method.returnType == Unit::class.java || method.declaringClass == method.returnType)) {
                 val methodName = method.name
                 if (methodName.startsWith("set")) {
                     var propName = methodName.substring(3)

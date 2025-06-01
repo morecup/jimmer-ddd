@@ -5,7 +5,6 @@ import org.babyfish.jimmer.sql.fetcher.impl.FetcherImplementor
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.objectweb.asm.Type
-import kotlin.collections.plus
 import java.util.concurrent.ConcurrentHashMap
 
 private val analysisMethodFetcherCache: MutableMap<MethodInfo, FetcherImplementor<*>> = ConcurrentHashMap()
@@ -17,10 +16,11 @@ fun <T : Any> analysisMethodFetcher(entityClazz: Class<T>, methodInfo: MethodInf
         val neededGetFieldNameSet = analyzeMethods.filter {
 //        it.ownerClass == function.javaMethod?.declaringClass?.name&&
             it.desc.startsWith("()")&&
-                    it.desc!="()Z" }.map {
+                    it.desc!="()V" }.map {
             if (it.ownerClass.endsWith("Draft")){ it.ownerClass = it.ownerClass.substring(0, it.ownerClass.length - "Draft".length)}
             if (it.name.startsWith("get")){ it.name = it.name.substring(3).replaceFirstChar { it.lowercase() }}
             if (it.desc.endsWith("Draft;")){ it.desc = it.desc.substring(0, it.desc.length - "Draft;".length) + ";"}
+            if (it.ownerClass == methodInfo.ownerClass){ it.ownerClass = entityClazz.name }
             it
         }.toHashSet()
 
