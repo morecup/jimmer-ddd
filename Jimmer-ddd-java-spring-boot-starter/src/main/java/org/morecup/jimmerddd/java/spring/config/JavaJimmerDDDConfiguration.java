@@ -5,6 +5,7 @@ import org.babyfish.jimmer.spring.cfg.JimmerAutoConfiguration;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.morecup.jimmerddd.core.JimmerDDDConfig;
 import org.morecup.jimmerddd.java.spring.aggregateproxy.IdGenerator;
+import org.morecup.jimmerddd.java.spring.factory.FactoryAop;
 import org.morecup.jimmerddd.java.spring.preanalysis.JAggregateSqlClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +27,11 @@ public class JavaJimmerDDDConfiguration {
     @Bean
     public JAggregateSqlClient jAggregateSqlClient() {
         return new JAggregateSqlClient(jSqlClient);
+    }
+
+    @Bean
+    public FactoryAop factoryAop() {
+        return new FactoryAop();
     }
 
     @EventListener(ContextRefreshedEvent.class)

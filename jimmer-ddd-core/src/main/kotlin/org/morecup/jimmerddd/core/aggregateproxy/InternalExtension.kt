@@ -4,6 +4,7 @@ import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.Internal
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import kotlin.Throws
 
 object GlobalContext {
     // 缓存 ThreadLocal 实例
@@ -51,4 +52,14 @@ object GlobalContext {
     @JvmStatic
     fun <T> nullDraftContext( block: () -> T): T =
         usingDraftContext(null,block)
+
+    @JvmStatic
+    @Throws(Throwable::class)
+    fun <T> nullDraftContextWithThrowable( block: OneReturnLambda<T>): T =
+        usingDraftContext(null,block::run)
+}
+
+fun interface OneReturnLambda<T> {
+    @Throws(Throwable::class)
+    fun run(): T
 }

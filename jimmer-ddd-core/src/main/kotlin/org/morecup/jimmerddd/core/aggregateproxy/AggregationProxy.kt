@@ -3,6 +3,7 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.morecup.jimmerddd.core.FindByIdFunction
+import org.morecup.jimmerddd.core.event.EventHandler
 import org.morecup.jimmerddd.core.event.EventManager.publish
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -31,12 +32,6 @@ internal open class AggregationProxy(
         }
         return false to null
     }
-}
-
-interface EventHandler {
-    fun publishEvent(event: Any)
-
-    fun lazyPublishEvent(event: Any)
 }
 
 private val publishMethod = EventHandler::class.java.getMethod("publishEvent", Any::class.java);
