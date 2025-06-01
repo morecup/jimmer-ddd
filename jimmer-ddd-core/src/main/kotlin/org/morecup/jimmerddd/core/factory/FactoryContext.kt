@@ -1,8 +1,8 @@
 package org.morecup.jimmerddd.core.factory
 
 import org.morecup.jimmerddd.core.JimmerDDDConfig
-import org.morecup.jimmerddd.core.aggregateproxy.EventHandler
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
+import org.morecup.jimmerddd.core.event.EventHandler
 
 object FactoryContext {
     @JvmStatic
@@ -34,6 +34,11 @@ object FactoryContext {
         val (entity,lazyEventList)=doEventBlock(block)
         val modifiedEntity = JimmerDDDConfig.getSaveEntityFunction().invoke(entity!!) as T
         FactoryModifiedResult(modifiedEntity,lazyEventList)
+    }
+
+    @JvmStatic
+    fun <T> sameContext(eventHandler: EventHandler,block: EventHandler.()->T): T = nullDraftContext {
+        block.invoke(eventHandler)
     }
 
     private fun <T> doEventBlock(block: EventHandler.()->T): FactoryResult<T>{
