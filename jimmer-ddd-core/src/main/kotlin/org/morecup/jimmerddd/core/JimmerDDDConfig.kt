@@ -1,7 +1,6 @@
 package org.morecup.jimmerddd.core
 
 import org.babyfish.jimmer.sql.fetcher.Fetcher
-import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 
 typealias FindByIdFunction = (Fetcher<*>, Any) -> Any?
 typealias SaveEntityFunction = (Any) -> Any
@@ -67,11 +66,5 @@ object JimmerDDDConfig {
             throw JimmerDDDException("JimmerDDDConfig.eventPublishFunction未配置，请配置成对应jimmer sqlClient getEventPublishFunction的逻辑")
         }
         return eventPublishFunction!!
-    }
-
-    fun publishEvent(event: Any) {
-        nullDraftContext {
-            getEventPublishFunction().publish(event)
-        }
     }
 }

@@ -4,7 +4,7 @@ import org.babyfish.jimmer.spring.cfg.JimmerAutoConfiguration
 import org.babyfish.jimmer.sql.kt.KSqlClient
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.kotlin.spring.aggregateproxy.generatorId
-import org.morecup.jimmerddd.kotlin.spring.preanalysis.saveAggregateChanged
+import org.morecup.jimmerddd.kotlin.spring.preanalysis.saveAggregate
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.context.ApplicationContext
 import org.springframework.context.event.ContextRefreshedEvent
@@ -24,7 +24,7 @@ open class KotlinJimmerDDDConfiguration(
         }
         // 配置 JimmerDDDConfig 的 saveEntityFunction
         JimmerDDDConfig.setSaveEntityFunction{ entity ->
-            kSqlClient.saveAggregateChanged(entity).modifiedEntity
+            kSqlClient.saveAggregate(entity).modifiedEntity
         }
         JimmerDDDConfig.setEventPublishFunction(applicationContext::publishEvent)
 
