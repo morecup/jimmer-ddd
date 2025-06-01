@@ -21,7 +21,7 @@ inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, 
     return findById(id,fetcher)
 }
 
-fun <E: Any> KSqlClient.saveAggregateChanged(
+fun <E: Any> KSqlClient.saveAggregate(
     entity: E,
     mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
     associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
@@ -35,7 +35,7 @@ fun <E: Any> KSqlClient.saveAggregateChanged(
     return save(baseAssociatedFixed(impl), mode, associatedMode, block)
 }
 
-fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregateChanged(
+fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregate(
     entity: E,
     mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
     associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,

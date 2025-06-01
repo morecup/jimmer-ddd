@@ -2,13 +2,13 @@ package org.morecup.jimmerddd.java.spring.config;
 
 
 import org.babyfish.jimmer.spring.cfg.JimmerAutoConfiguration;
-import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode;
-import org.babyfish.jimmer.sql.ast.mutation.SaveMode;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.morecup.jimmerddd.core.JimmerDDDConfig;
 import org.morecup.jimmerddd.java.spring.aggregateproxy.IdGenerator;
+import org.morecup.jimmerddd.java.spring.preanalysis.JAggregateSqlClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
@@ -23,14 +23,19 @@ public class JavaJimmerDDDConfiguration {
         this.applicationContext = applicationContext;
     }
 
+    @Bean
+    public JAggregateSqlClient jAggregateSqlClient() {
+        return new JAggregateSqlClient(jSqlClient);
+    }
+
     @EventListener(ContextRefreshedEvent.class)
-    public void onContextRefreshed() {
+    public void onContextRefreshed(JAggregateSqlClient jAggregateSqlClient) {
         // 配置查询函数
         JimmerDDDConfig.setFindByIdFunction(jSqlClient::findById);
 
         // 配置保存函数
         JimmerDDDConfig.setSaveEntityFunction(entity ->
-                jSqlClient.save(entity, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE).getModifiedEntity()
+                jAggregateSqlClient.saveAggregate(entity).getModifiedEntity()
         );
 
         // 配置事件发布函数

@@ -14,8 +14,8 @@ import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor
 import org.morecup.jimmerddd.core.JimmerDDDConfig.getIdGeneratorFunction
 import org.morecup.jimmerddd.core.JimmerDDDException
 import java.sql.Connection
-import kotlin.use
 
+@JvmOverloads
 fun <T> baseAssociatedFixed(base:T,autoAddListId: Boolean = true): T {
     val immutable = base
     val spi = immutable as ImmutableSpi
