@@ -7,15 +7,7 @@ import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 object FactoryContext {
     @JvmStatic
     fun <T> autoContext(block: EventHandler.()->T): T = nullDraftContext {
-        val lazyEventList = mutableListOf<Any>()
-        val entity = object : EventHandler{
-            override fun publishEvent(event: Any) {
-                JimmerDDDConfig.getEventPublishFunction().publish(event)
-            }
-            override fun lazyPublishEvent(event: Any) {
-                lazyEventList.add(event)
-            }
-        }.let(block)
+        val (entity,lazyEventList)=doEventBlock(block)
         val modifiedEntity = entity?.let { JimmerDDDConfig.getSaveEntityFunction().invoke(it) }
         lazyEventList.forEach {
             JimmerDDDConfig.getEventPublishFunction().publish(it)
@@ -25,6 +17,26 @@ object FactoryContext {
 
     @JvmStatic
     fun <T> eventContext(block: EventHandler.()->T): FactoryResult<T> = nullDraftContext {
+        doEventBlock(block)
+    }
+
+    @JvmStatic
+    fun <T> eventAutoContext(block: EventHandler.()->T): T = nullDraftContext {
+        val (entity,lazyEventList)=doEventBlock(block)
+        lazyEventList.forEach {
+            JimmerDDDConfig.getEventPublishFunction().publish(it)
+        }
+        entity
+    }
+
+    @JvmStatic
+    fun <T> saveAutoContext(block: EventHandler.()->T): FactoryModifiedResult<T> = nullDraftContext {
+        val (entity,lazyEventList)=doEventBlock(block)
+        val modifiedEntity = JimmerDDDConfig.getSaveEntityFunction().invoke(entity!!) as T
+        FactoryModifiedResult(modifiedEntity,lazyEventList)
+    }
+
+    private fun <T> doEventBlock(block: EventHandler.()->T): FactoryResult<T>{
         val lazyEventList = mutableListOf<Any>()
         val entity = object : EventHandler{
             override fun publishEvent(event: Any) {
@@ -34,11 +46,15 @@ object FactoryContext {
                 lazyEventList.add(event)
             }
         }.let(block)
-        FactoryResult(entity,lazyEventList)
+        return FactoryResult(entity,lazyEventList)
     }
 }
 
 data class FactoryResult<T>(
     val entity: T,
+    val lazyEventList: List<Any>
+)
+data class FactoryModifiedResult<T>(
+    val modifiedEntity: T,
     val lazyEventList: List<Any>
 )
