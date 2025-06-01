@@ -125,8 +125,7 @@ internal open class EntityProxy(
                         }
                     }
             } catch (e: Exception) {
-                e.printStackTrace()
-                throw RuntimeException(e)
+                throw JimmerDDDException("反射访问default方法失败，$method",e)
             }
         }
 
