@@ -3,12 +3,6 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import javafx.beans.binding.Bindings.select
-import org.babyfish.jimmer.meta.TargetLevel
-import org.babyfish.jimmer.runtime.DraftSpi
-import org.babyfish.jimmer.runtime.ImmutableSpi
-import org.babyfish.jimmer.runtime.Internal
-import org.babyfish.jimmer.runtime.NonSharedList
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
@@ -18,23 +12,13 @@ import org.babyfish.jimmer.sql.kt.ast.expression.eq
 import org.babyfish.jimmer.sql.kt.fetcher.newFetcher
 import org.junit.jupiter.api.Test
 import org.morecup.jimmerddd.core.App
-import org.morecup.jimmerddd.core.domain.SnowflakeIdGenerator
 import org.morecup.jimmerddd.core.domain.goods.Goods
-import org.morecup.jimmerddd.core.domain.order.Order
-import org.morecup.jimmerddd.core.domain.order.OrderFactory
-import org.morecup.jimmerddd.core.domain.order.OrderImpl
-import org.morecup.jimmerddd.core.domain.order.OrderRepository
-import org.morecup.jimmerddd.core.domain.order.by
+import org.morecup.jimmerddd.core.domain.order.*
 import org.morecup.jimmerddd.core.domain.order.dto.CreateOrderCmd
-import org.morecup.jimmerddd.core.domain.order.fetchBy
-import org.morecup.jimmerddd.core.domain.order.id
-import org.morecup.jimmerddd.core.domain.order.orderAggregateProxy
-import org.morecup.jimmerddd.core.domain.order.testOrderId
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo
 import org.morecup.jimmerddd.core.preanalysis.analysisMethodFetcher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import kotlin.jvm.java
 import kotlin.reflect.jvm.javaMethod
 
 @SpringBootTest(classes = [App::class])
