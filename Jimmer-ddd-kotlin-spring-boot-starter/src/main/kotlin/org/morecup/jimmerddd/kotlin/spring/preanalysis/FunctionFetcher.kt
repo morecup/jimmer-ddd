@@ -1,7 +1,13 @@
 package org.morecup.jimmerddd.kotlin.spring.preanalysis
 
+import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.spring.repo.KotlinRepository
+import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
+import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.KSqlClient
+import org.babyfish.jimmer.sql.kt.ast.mutation.KSaveCommandPartialDsl
+import org.babyfish.jimmer.sql.kt.ast.mutation.KSimpleSaveResult
+import org.morecup.jimmerddd.core.aggregateproxy.baseAssociatedFixed
 import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -15,3 +21,30 @@ inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, 
     return findById(id,fetcher)
 }
 
+fun <E: Any> KSqlClient.saveAggregateChanged(
+    entity: E,
+    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
+    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
+    block: (KSaveCommandPartialDsl.() -> Unit)? = null
+): KSimpleSaveResult<E> {
+    val impl = if (entity is DraftSpi){
+        entity.__resolve() as E
+    }else{
+        entity
+    }
+    return save(baseAssociatedFixed(impl), mode, associatedMode, block)
+}
+
+fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregateChanged(
+    entity: E,
+    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
+    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
+    block: (KSaveCommandPartialDsl.() -> Unit)? = null
+): KSimpleSaveResult<E>{
+    val impl = if (entity is DraftSpi){
+        entity.__resolve() as E
+    }else{
+        entity
+    }
+    return save(baseAssociatedFixed(impl), mode, associatedMode, block)
+}
