@@ -1,16 +1,14 @@
 package org.morecup.jimmerddd.kotlin.spring.config
 
 import org.babyfish.jimmer.spring.cfg.JimmerAutoConfiguration
-import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.babyfish.jimmer.sql.kt.KSqlClient
-import org.springframework.context.ApplicationContext
-import org.springframework.context.event.ContextRefreshedEvent
-import org.springframework.context.event.EventListener
-import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
-import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.kotlin.spring.aggregateproxy.generatorId
 import org.morecup.jimmerddd.kotlin.spring.preanalysis.saveAggregateChanged
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.context.ApplicationContext
+import org.springframework.context.event.ContextRefreshedEvent
+import org.springframework.context.event.EventListener
 
 @AutoConfiguration(after = [JimmerAutoConfiguration::class])
 open class KotlinJimmerDDDConfiguration(

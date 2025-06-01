@@ -19,7 +19,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun <T, R> execAndSave(base: T, implProcessor: (P) -> R): R {
         val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
-        saveEntityFunction.invoke(baseAssociatedFixed(changed!!))
+        saveEntityFunction.invoke(changed!!)
         lazyPublishEventList.forEach {
             publishEvent(it)
         }
@@ -32,7 +32,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
     fun <T, R> execAndSaveRM(base: T, implProcessor: (P) -> R): ProxyResultRM<T, R> {
         val context = ProxyContext<T, P>(base, implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
-        val modified = saveEntityFunction.invoke(baseAssociatedFixed(changed!!))
+        val modified = saveEntityFunction.invoke(changed!!)
         return ProxyResultRM(modified as T , result,lazyPublishEventList)
     }
 
@@ -47,7 +47,7 @@ class AggregateProxy<P : Any> @JvmOverloads constructor(
         val arrayBases = arrayListOf(bases)
         val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
-        changed.forEach { saveEntityFunction.invoke(baseAssociatedFixed(it)) }
+        changed.forEach { saveEntityFunction.invoke(it) }
         lazyPublishEventList.forEach { publishEvent(it) }
         return result
     }
