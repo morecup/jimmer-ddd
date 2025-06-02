@@ -6,7 +6,6 @@ import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.event.EventHandler
 import org.morecup.jimmerddd.core.event.EventManager.publish
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 
 internal open class AggregationProxy(
     private val propNameDraftManager: IPropNameDraftManager,
@@ -17,9 +16,9 @@ internal open class AggregationProxy(
     val lazyPublishEventList = ArrayList<Any>()
 
     override fun createProxy(): Any {
-        return Proxy.newProxyInstance(
+        return byteBuddyNewProxyInstance(
             proxyClass.classLoader,
-            arrayOf(proxyClass, DraftSpi::class.java,EventHandler::class.java),
+            listOf(proxyClass, DraftSpi::class.java,EventHandler::class.java),
             ProxyInvocationHandler()
         )
     }

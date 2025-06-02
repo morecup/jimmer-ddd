@@ -1,5 +1,8 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
+import net.bytebuddy.ByteBuddy
+import net.bytebuddy.implementation.InvocationHandlerAdapter
+import net.bytebuddy.matcher.ElementMatchers
 import org.babyfish.jimmer.Draft
 import org.babyfish.jimmer.UnloadedException
 import org.babyfish.jimmer.meta.ImmutableProp
@@ -20,7 +23,7 @@ import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
+import java.lang.reflect.Type
 
 internal open class EntityProxy(
     private val propNameDraftManager:IPropNameDraftManager,
@@ -53,19 +56,30 @@ internal open class EntityProxy(
 
     protected open fun createProxy(): Any {
         if (Draft::class.java.isAssignableFrom(proxyClass)){
-            return Proxy.newProxyInstance(
+            return byteBuddyNewProxyInstance(
                 proxyClass.classLoader,
-                arrayOf(proxyClass, DraftSpi::class.java),
+                listOf(proxyClass, DraftSpi::class.java),
                 ProxyInvocationHandler()
             )
         }else{
             val proxyClassDraft = propNameDraftManager.proxyClass
-            return Proxy.newProxyInstance(
+            return byteBuddyNewProxyInstance(
                 proxyClassDraft.classLoader,
-                arrayOf(proxyClassDraft, DraftSpi::class.java),
+                listOf(proxyClassDraft, DraftSpi::class.java),
                 ProxyInvocationHandler()
             )
         }
+    }
+
+    internal fun byteBuddyNewProxyInstance(loader:ClassLoader, interfaces: List<Type>, h:InvocationHandler): Any {
+        return ByteBuddy()
+            .subclass(Any::class.java)
+            .implement(interfaces)
+            .method(ElementMatchers.not(ElementMatchers.isDefaultMethod()))
+            .intercept(InvocationHandlerAdapter.of(h))
+            .make()
+            .load(loader)
+            .loaded.getDeclaredConstructor().newInstance()
     }
 
     protected open fun handleOtherMethod(proxy: Any, method: Method, args: Array<Any>?): Pair<Boolean,Any?> {
@@ -85,12 +99,12 @@ internal open class EntityProxy(
             if (method.name == "hashCode" && method.parameterCount == 0) {
                 return System.identityHashCode(proxy)
             }
-            if (method.isDefault) {
-                // 对于默认方法，我们可以调用它的默认实现
-                // 使用MethodHandle来调用默认方法
-
-                return invokeDefaultMethod(proxy,method, args)
-            }
+//            if (method.isDefault) {
+//                // 对于默认方法，我们可以调用它的默认实现
+//                // 使用MethodHandle来调用默认方法
+//
+//                return invokeDefaultMethod(proxy,method, args)
+//            }
             val (success, result) = handleOtherMethod(proxy, method, args)
             if (success) {
                 return result
@@ -99,35 +113,35 @@ internal open class EntityProxy(
         }
         private val lookups = mutableMapOf<Class<*>, MethodHandles.Lookup>()
 
-        private fun invokeDefaultMethod(proxy:Any?, method:Method, args: Array<Any>?):Any? {
-            try {
-                val declaringClass = method.declaringClass
-
-                // 2. 获取或创建具有私有访问权限的Lookup
-                val lookup = lookups.getOrPut(declaringClass) {
-                    // 2.1 使用反射获取Lookup构造器
-                    val constructor = MethodHandles.Lookup::class.java
-                        .getDeclaredConstructor(Class::class.java)
-                        .apply { isAccessible = true } // 解决构造器访问限制
-
-                    // 2.2 创建具有正确访问权限的Lookup
-                    constructor.newInstance(declaringClass).`in`(declaringClass)
-                }
-
-                // 3. 创建方法句柄并调用
-                return lookup.unreflectSpecial(method, declaringClass)
-                    .bindTo(proxy)
-                    .let { handle ->
-                        when {
-                            args != null && args.isNotEmpty() -> handle.invokeWithArguments(*args)
-                            args != null -> handle.invoke() // 无参方法
-                            else -> handle.invoke() // 无参方法
-                        }
-                    }
-            } catch (e: Exception) {
-                throw JimmerDDDException("反射访问default方法失败，$method",e)
-            }
-        }
+//        private fun invokeDefaultMethod(proxy:Any?, method:Method, args: Array<Any>?):Any? {
+//            try {
+//                val declaringClass = method.declaringClass
+//
+//                // 2. 获取或创建具有私有访问权限的Lookup
+//                val lookup = lookups.getOrPut(declaringClass) {
+//                    // 2.1 使用反射获取Lookup构造器
+//                    val constructor = MethodHandles.Lookup::class.java
+//                        .getDeclaredConstructor(Class::class.java)
+//                        .apply { isAccessible = true } // 解决构造器访问限制
+//
+//                    // 2.2 创建具有正确访问权限的Lookup
+//                    constructor.newInstance(declaringClass).`in`(declaringClass)
+//                }
+//
+//                // 3. 创建方法句柄并调用
+//                return lookup.unreflectSpecial(method, declaringClass)
+//                    .bindTo(proxy)
+//                    .let { handle ->
+//                        when {
+//                            args != null && args.isNotEmpty() -> handle.invokeWithArguments(*args)
+//                            args != null -> handle.invoke() // 无参方法
+//                            else -> handle.invoke() // 无参方法
+//                        }
+//                    }
+//            } catch (e: Exception) {
+//                throw JimmerDDDException("反射访问default方法失败，$method",e)
+//            }
+//        }
 
         private fun toGetterPropNameOrNull(method: Method): String? {
             if (method.parameterCount == 0 && (method.returnType != Void.TYPE && method.returnType != Unit::class.java)){

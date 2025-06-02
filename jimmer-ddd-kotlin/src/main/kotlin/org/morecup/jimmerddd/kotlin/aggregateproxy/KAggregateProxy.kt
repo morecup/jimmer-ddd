@@ -6,7 +6,7 @@ import org.morecup.jimmerddd.core.SaveEntityFunction
 import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy
 import kotlin.reflect.KClass
 
-class KAggregateProxy<P : Any> @JvmOverloads constructor(
+class KAggregateProxy<P : Any>(
     private val implInterfaceClass: KClass<P>,
     private val findByIdFunction: FindByIdFunction = JimmerDDDConfig.getFindByIdFunction(),
     private val saveEntityFunction: SaveEntityFunction = JimmerDDDConfig.getSaveEntityFunction()

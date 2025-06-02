@@ -8,6 +8,7 @@ dependencies {
     compileOnly(libs.jimmer.sql)
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.ow2.asm:asm-tree:9.8")
+    implementation("net.bytebuddy:byte-buddy:1.14.18")
     compileOnly("org.slf4j:slf4j-api:2.0.7")
     testImplementation(kotlin("test"))
     testImplementation("cn.hutool:hutool-all:5.8.22")

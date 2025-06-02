@@ -2,13 +2,11 @@ package org.morecup.jimmerddd.kotlin.spring.domain.order
 
 import org.babyfish.jimmer.Formula
 import org.babyfish.jimmer.sql.*
-import org.morecup.jimmerddd.core.aggregateproxy.EventHandler
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 import org.morecup.jimmerddd.core.annotation.Lazy
-import org.morecup.jimmerddd.core.domain.order.OrderDraft
-import org.morecup.jimmerddd.core.domain.order.addBy
+import org.morecup.jimmerddd.core.event.EventHandler
 import org.morecup.jimmerddd.kotlin.aggregateproxy.KAggregateProxy
 import org.morecup.jimmerddd.kotlin.spring.domain.BaseEntity
 import org.morecup.jimmerddd.kotlin.spring.domain.DomainEvent
@@ -71,7 +69,6 @@ class OrderUtil {
     }
 }
 val orderAggregateProxy = KAggregateProxy(OrderDraft::class)
-//val orderAggregateProxy1 = AggregateProxy1(OrderDraft::class.java)
 
 class OrderImpl(order: OrderDraft) : OrderDraft by order, EventHandler by order as EventHandler {
 

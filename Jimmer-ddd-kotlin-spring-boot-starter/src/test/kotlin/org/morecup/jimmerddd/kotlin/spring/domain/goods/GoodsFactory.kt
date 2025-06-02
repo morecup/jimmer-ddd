@@ -1,6 +1,5 @@
 package org.morecup.jimmerddd.kotlin.spring.domain.goods
 
-import org.morecup.jimmerddd.core.domain.goods.Goods
 import org.springframework.stereotype.Service
 
 @Service

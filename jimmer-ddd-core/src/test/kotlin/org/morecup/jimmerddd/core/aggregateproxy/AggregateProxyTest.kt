@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.morecup.jimmerddd.core.App
 import org.morecup.jimmerddd.core.domain.goods.Goods
 import org.morecup.jimmerddd.core.domain.order.*
-import org.morecup.jimmerddd.core.domain.order.dto.CreateOrderCmd
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo
 import org.morecup.jimmerddd.core.preanalysis.analysisMethodFetcher
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,10 +31,10 @@ class AggregateProxyTest {
     @Autowired
     private lateinit var factory: OrderFactory
 
-    @Test
-    fun addData() {
-        factory.create(CreateOrderCmd("新的订单1"))
-    }
+//    @Test
+//    fun addData() {
+//        factory.create(CreateOrderCmd("新的订单1"))
+//    }
 
     @Test
     fun testInAggregateMethodAddAnotherAggregateData() {

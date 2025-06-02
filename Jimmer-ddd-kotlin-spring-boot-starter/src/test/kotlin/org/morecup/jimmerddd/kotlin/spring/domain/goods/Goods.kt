@@ -1,7 +1,6 @@
 package org.morecup.jimmerddd.kotlin.spring.domain.goods
 
 import org.babyfish.jimmer.sql.Entity
-import org.morecup.jimmerddd.core.domain.goods.GoodsDraft
 import org.morecup.jimmerddd.kotlin.aggregateproxy.KAggregateProxy
 import org.morecup.jimmerddd.kotlin.spring.domain.BaseEntity
 
