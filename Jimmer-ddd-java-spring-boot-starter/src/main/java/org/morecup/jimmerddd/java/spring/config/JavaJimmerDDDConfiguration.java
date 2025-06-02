@@ -5,7 +5,7 @@ import org.babyfish.jimmer.spring.cfg.JimmerAutoConfiguration;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.morecup.jimmerddd.core.JimmerDDDConfig;
 import org.morecup.jimmerddd.java.spring.aggregateproxy.IdGenerator;
-import org.morecup.jimmerddd.java.spring.factory.FactoryAop;
+import org.morecup.jimmerddd.java.spring.factory.JFactoryAop;
 import org.morecup.jimmerddd.java.spring.preanalysis.JAggregateSqlClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -30,18 +30,18 @@ public class JavaJimmerDDDConfiguration {
     }
 
     @Bean
-    public FactoryAop factoryAop() {
-        return new FactoryAop();
+    public JFactoryAop factoryAop() {
+        return new JFactoryAop();
     }
 
     @EventListener(ContextRefreshedEvent.class)
-    public void onContextRefreshed(JAggregateSqlClient jAggregateSqlClient) {
+    public void onContextRefreshed() {
         // 配置查询函数
         JimmerDDDConfig.setFindByIdFunction(jSqlClient::findById);
 
         // 配置保存函数
         JimmerDDDConfig.setSaveEntityFunction(entity ->
-                jAggregateSqlClient.saveAggregate(entity).getModifiedEntity()
+                jAggregateSqlClient().saveAggregate(entity).getModifiedEntity()
         );
 
         // 配置事件发布函数

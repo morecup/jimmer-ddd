@@ -20,8 +20,8 @@ import static org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftC
 @Aspect
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE - 1) // 确保在用户自定义切面之前执行
-public class FactoryAop {
-    private static final Logger logger = LoggerFactory.getLogger(FactoryAop.class);
+public class JFactoryAop {
+    private static final Logger logger = LoggerFactory.getLogger(JFactoryAop.class);
 
     // 定义切入点，拦截含有 WithFactoryContext 注解的方法
     @Pointcut("@annotation(org.morecup.jimmerddd.java.spring.factory.WithFactoryContext)")

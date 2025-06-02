@@ -1,7 +1,7 @@
 package org.morecup.jimmerddd.java.spring.domain.goods;
 
 import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy;
-import org.morecup.jimmerddd.core.aggregateproxy.EventHandler;
+import org.morecup.jimmerddd.core.event.EventHandler;
 
 import static org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext;
 
