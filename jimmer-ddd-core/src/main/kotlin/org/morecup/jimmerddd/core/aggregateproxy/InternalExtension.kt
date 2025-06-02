@@ -2,9 +2,6 @@ package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.Internal
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
-import kotlin.Throws
 
 object GlobalContext {
     // 缓存 ThreadLocal 实例
@@ -15,10 +12,6 @@ object GlobalContext {
                 .getDeclaredField("DRAFT_CONTEXT_LOCAL")
                 .apply {
                     isAccessible = true // 突破 private 限制
-                    // 如果需要修改 final 字段，移除 final 修饰符（可选）
-                    val modifiersField = Field::class.java.getDeclaredField("modifiers")
-                    modifiersField.isAccessible = true
-                    modifiersField.setInt(this, modifiers and Modifier.FINAL.inv())
                 }
                 .get(null) as ThreadLocal<DraftContext> // 静态字段用 null 获取
         }.getOrElse {
