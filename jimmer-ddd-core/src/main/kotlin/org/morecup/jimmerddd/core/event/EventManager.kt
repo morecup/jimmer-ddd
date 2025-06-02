@@ -19,9 +19,11 @@ object EventManager {
 }
 
 fun Draft.publishEvent(event: Any) {
-    EventManager.publishWithLocalDraftContext(event)
+    EventManager.publish(event)
 }
 
 fun Draft.lazyPublishEvent(event: Any) {
-    EventManager.publish(event)
+    if (this is EventHandler) {
+        this.lazyPublishEvent(event)
+    }
 }
