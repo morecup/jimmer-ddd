@@ -8,5 +8,5 @@ fun ApplicationEvent.publish() {
 }
 
 fun ApplicationEvent.publishWithDraftContext() {
-    EventManager.publishWithDraftContext(this)
+    EventManager.publishWithLocalDraftContext(this)
 }
