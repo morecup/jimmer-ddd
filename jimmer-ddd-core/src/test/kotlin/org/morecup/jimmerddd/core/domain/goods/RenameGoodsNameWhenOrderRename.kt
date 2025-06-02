@@ -1,6 +1,6 @@
 package org.morecup.jimmerddd.core.domain.goods
 
-import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
+import org.morecup.jimmerddd.core.aggregateproxy.nullDraftContext
 import org.morecup.jimmerddd.core.domain.order.RenameEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component

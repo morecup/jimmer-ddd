@@ -2,7 +2,7 @@
 package org.morecup.jimmerddd.core.factory
 
 import org.morecup.jimmerddd.core.JimmerDDDConfig
-import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
+import org.morecup.jimmerddd.core.aggregateproxy.nullDraftContext
 import org.morecup.jimmerddd.core.event.EventHandler
 
 

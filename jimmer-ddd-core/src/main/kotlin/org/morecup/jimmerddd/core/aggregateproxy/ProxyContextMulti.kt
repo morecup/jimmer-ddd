@@ -3,7 +3,6 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import org.babyfish.jimmer.runtime.DraftContext
 import org.babyfish.jimmer.runtime.ImmutableSpi
 import org.morecup.jimmerddd.core.FindByIdFunction
-import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.usingDraftContext
 
 internal class ProxyContextMulti<P>(
     private val bases: List<Any>,
