@@ -2,7 +2,6 @@ package org.morecup.jimmerddd.kotlin.spring.domain
 
 import org.babyfish.jimmer.kt.isLoaded
 import org.babyfish.jimmer.sql.DraftInterceptor
-import org.morecup.jimmerddd.core.domain.BaseEntityDraft
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 

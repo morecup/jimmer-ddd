@@ -1,59 +1,55 @@
+@file:JvmName("FactoryContext")
 package org.morecup.jimmerddd.core.factory
 
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.aggregateproxy.GlobalContext.nullDraftContext
 import org.morecup.jimmerddd.core.event.EventHandler
 
-object FactoryContext {
-    @JvmStatic
-    fun <T> autoContext(block: EventHandler.()->T): T = nullDraftContext {
-        val (entity,lazyEventList)=doEventBlock(block)
-        val modifiedEntity = entity?.let { JimmerDDDConfig.getSaveEntityFunction().invoke(it) }
-        lazyEventList.forEach {
-            JimmerDDDConfig.getEventPublishFunction().publish(it)
-        }
-        modifiedEntity as T
-    }
 
-    @JvmStatic
-    fun <T> eventContext(block: EventHandler.()->T): FactoryResult<T> = nullDraftContext {
-        doEventBlock(block)
+fun <T> autoContext(block: EventHandler.()->T): T = nullDraftContext {
+    val (entity,lazyEventList)=doEventBlock(block)
+    val modifiedEntity = entity?.let { JimmerDDDConfig.getSaveEntityFunction().invoke(it) }
+    lazyEventList.forEach {
+        JimmerDDDConfig.getEventPublishFunction().publish(it)
     }
-
-    @JvmStatic
-    fun <T> eventAutoContext(block: EventHandler.()->T): T = nullDraftContext {
-        val (entity,lazyEventList)=doEventBlock(block)
-        lazyEventList.forEach {
-            JimmerDDDConfig.getEventPublishFunction().publish(it)
-        }
-        entity
-    }
-
-    @JvmStatic
-    fun <T> saveAutoContext(block: EventHandler.()->T): FactoryModifiedResult<T> = nullDraftContext {
-        val (entity,lazyEventList)=doEventBlock(block)
-        val modifiedEntity = JimmerDDDConfig.getSaveEntityFunction().invoke(entity!!) as T
-        FactoryModifiedResult(modifiedEntity,lazyEventList)
-    }
-
-    @JvmStatic
-    fun <T> sameContext(eventHandler: EventHandler,block: EventHandler.()->T): T = nullDraftContext {
-        block.invoke(eventHandler)
-    }
-
-    private fun <T> doEventBlock(block: EventHandler.()->T): FactoryResult<T>{
-        val lazyEventList = mutableListOf<Any>()
-        val entity = object : EventHandler{
-            override fun publishEvent(event: Any) {
-                JimmerDDDConfig.getEventPublishFunction().publish(event)
-            }
-            override fun lazyPublishEvent(event: Any) {
-                lazyEventList.add(event)
-            }
-        }.let(block)
-        return FactoryResult(entity,lazyEventList)
-    }
+    modifiedEntity as T
 }
+
+fun <T> eventContext(block: EventHandler.()->T): FactoryResult<T> = nullDraftContext {
+    doEventBlock(block)
+}
+
+fun <T> eventAutoContext(block: EventHandler.()->T): T = nullDraftContext {
+    val (entity,lazyEventList)=doEventBlock(block)
+    lazyEventList.forEach {
+        JimmerDDDConfig.getEventPublishFunction().publish(it)
+    }
+    entity
+}
+
+fun <T> saveAutoContext(block: EventHandler.()->T): FactoryModifiedResult<T> = nullDraftContext {
+    val (entity,lazyEventList)=doEventBlock(block)
+    val modifiedEntity = JimmerDDDConfig.getSaveEntityFunction().invoke(entity!!) as T
+    FactoryModifiedResult(modifiedEntity,lazyEventList)
+}
+
+fun <T> sameContext(eventHandler: EventHandler,block: EventHandler.()->T): T = nullDraftContext {
+    block.invoke(eventHandler)
+}
+
+private fun <T> doEventBlock(block: EventHandler.()->T): FactoryResult<T>{
+    val lazyEventList = mutableListOf<Any>()
+    val entity = object : EventHandler{
+        override fun publishEvent(event: Any) {
+            JimmerDDDConfig.getEventPublishFunction().publish(event)
+        }
+        override fun lazyPublishEvent(event: Any) {
+            lazyEventList.add(event)
+        }
+    }.let(block)
+    return FactoryResult(entity,lazyEventList)
+}
+
 
 data class FactoryResult<T>(
     val entity: T,
