@@ -19,6 +19,9 @@ fun <T> eventContext(block: EventHandler.()->T): FactoryResult<T> = nullDraftCon
     doEventBlock(block)
 }
 
+/**
+ * 自动在结束调用时发布事件
+ */
 fun <T> eventAutoContext(block: EventHandler.()->T): T = nullDraftContext {
     val (entity,lazyEventList)=doEventBlock(block)
     lazyEventList.forEach {
