@@ -18,7 +18,6 @@ import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDException
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
-import org.morecup.jimmerddd.core.annotation.Lazy
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.InvocationHandler
@@ -178,9 +177,9 @@ internal open class EntityProxy(
 
         private fun handleGetter(propName: String,ignoreNotAggregatedField:Boolean = false): Any? {
             val prop = propNameDraftManager.getPropByName(propName)
-            val lazy = prop.getAnnotation(Lazy::class.java)
+            val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
             val hasLoad: Boolean = propertiesLazyHasLoadMap.getOrDefault(propName, false)
-            if (lazy != null && !hasLoad){
+            if (aggregatedField != null && aggregatedField.lazy && !hasLoad){
                 propertiesLazyHasLoadMap.put(propName, true)
                 return if (prop.isView){
                     handleGetter(prop.idViewBaseProp.name,true)
@@ -213,8 +212,8 @@ internal open class EntityProxy(
 
         private fun handleSetter(propName: String, value: Any?,ignoreNotAggregatedField:Boolean = false) {
             val prop = propNameDraftManager.getPropByName(propName)
-            val lazy = prop.getAnnotation(Lazy::class.java)
-            if (lazy != null) {
+            val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
+            if (aggregatedField != null && aggregatedField.lazy) {
                 propertiesLazyHasLoadMap.put(propName, true)
             }
             if (prop.isView){
@@ -238,7 +237,7 @@ internal open class EntityProxy(
         val propName = prop.name
         if (prop.isAssociation(TargetLevel.ENTITY)){
             val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
-            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
+            if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY||aggregatedField.type == AggregationType.DEFAULT) {
                 val (proxyAssociationDraft, changedAssociationDraft) = buildAssociationDraft(value,prop.targetType.javaClass)
                 propertiesHasSetMap.put(propName,true)
                 propNameDraftManager.setTempDraftPropValue(propName, proxyAssociationDraft)
@@ -257,7 +256,7 @@ internal open class EntityProxy(
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null){
                 val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
-                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY) {
+                if (aggregatedField == null|| aggregatedField.type == AggregationType.AGGREGATED||aggregatedField.type == AggregationType.ID_ONLY||aggregatedField.type == AggregationType.DEFAULT) {
                     val reloadValue = associationPropReloadValue(prop)
                     val (proxyAssociationDraft, changedAssociationDraft) = buildAssociationDraft(reloadValue,prop.targetType.javaClass)
                     propertiesHasSetMap.put(propName,true)
@@ -279,7 +278,7 @@ internal open class EntityProxy(
         if (prop.isAssociation(TargetLevel.ENTITY)){
             if (prop.targetType != null) {
                 val aggregatedField = prop.getAnnotation(AggregatedField::class.java)
-                if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY) {
+                if (aggregatedField == null || aggregatedField.type == AggregationType.AGGREGATED || aggregatedField.type == AggregationType.ID_ONLY||aggregatedField.type == AggregationType.DEFAULT) {
 //                    如果没有加载过，就加载并设置
                     if (!propertiesHasSetMap.getOrDefault(propName, false)) {
                         val tempDraftValue = propNameDraftManager.getTempDraftPropValue(propName)

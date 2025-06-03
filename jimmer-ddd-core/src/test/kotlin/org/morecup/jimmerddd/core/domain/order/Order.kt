@@ -6,7 +6,6 @@ import org.morecup.jimmerddd.core.aggregateproxy.AggregateProxy
 import org.morecup.jimmerddd.core.aggregateproxy.nullDraftContext
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
-import org.morecup.jimmerddd.core.annotation.Lazy
 import org.morecup.jimmerddd.core.domain.BaseEntity
 import org.morecup.jimmerddd.core.domain.DomainEvent
 import org.morecup.jimmerddd.core.domain.DomainRegistry.goodsFactory
@@ -21,7 +20,6 @@ const val testOrderId = 1921171871529832448
 @Table(name = "`order`")
 interface Order : BaseEntity {
 
-    @Lazy
     val name: String
 
     @ManyToOne
@@ -41,7 +39,6 @@ interface Order : BaseEntity {
     val payment: Payment?
 
     @OneToMany(mappedBy = "order")
-    @Lazy
     val aftermarketList: List<Aftermarket>
 
     @Transient
@@ -55,7 +52,7 @@ interface Order : BaseEntity {
     val orderDetail: OrderDetail
 
     @OneToOne
-    @AggregatedField(type = AggregationType.ID_ONLY)
+    @AggregatedField(AggregationType.ID_ONLY)
     val goods: Goods?
 
     @IdView

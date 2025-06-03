@@ -1,11 +1,11 @@
 package org.morecup.jimmerddd.kotlin.spring.domain.order
 
+import com.fasterxml.jackson.databind.util.ClassUtil.name
 import org.babyfish.jimmer.Formula
 import org.babyfish.jimmer.sql.*
 import org.morecup.jimmerddd.core.aggregateproxy.nullDraftContext
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
-import org.morecup.jimmerddd.core.annotation.Lazy
 import org.morecup.jimmerddd.core.event.EventHandler
 import org.morecup.jimmerddd.kotlin.aggregateproxy.KAggregateProxy
 import org.morecup.jimmerddd.kotlin.spring.domain.BaseEntity
@@ -20,7 +20,6 @@ const val testOrderId = 1921171871529832448
 @Table(name = "`order`")
 interface Order : BaseEntity {
 
-    @Lazy
     val name: String
 
     @ManyToOne
@@ -40,7 +39,6 @@ interface Order : BaseEntity {
     val payment: Payment?
 
     @OneToMany(mappedBy = "order")
-    @Lazy
     val aftermarketList: List<Aftermarket>
 
     @Transient
