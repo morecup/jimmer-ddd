@@ -3,6 +3,7 @@ package org.morecup.jimmerddd.core.aggregateproxy
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.SaveEntityFunction
+import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity
 import org.morecup.jimmerddd.core.event.EventManager.publish
 
 open class AggregateProxy<P : Any> @JvmOverloads constructor(
@@ -47,12 +48,31 @@ open class AggregateProxy<P : Any> @JvmOverloads constructor(
     }
 
     /**
+     * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSaveRM
+     */
+    fun <R> execMulti(multiEntity: MultiEntity, implProcessor: (P) -> R): MultiProxyResult<R> {
+        val context = ProxyContextMulti<P>(multiEntity.toEntityList(), implInterfaceClass, findByIdFunction)
+        return context.execute(implProcessor)
+    }
+
+    /**
      * 支持多数据库实体映射单个聚合根的场景，其他功能等效exec
      * @param bases 多个数据库实体
      */
     fun <R> execMulti(vararg bases: Any, implProcessor: (P) -> R): MultiProxyResult<R> {
         val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
         return context.execute(implProcessor)
+    }
+
+    /**
+     * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSave
+     */
+    fun <R> execMultiAndSave(multiEntity: MultiEntity, implProcessor: (P) -> R): R {
+        val context = ProxyContextMulti<P>(multiEntity.toEntityList(), implInterfaceClass, findByIdFunction)
+        val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
+        changed.forEach { saveEntityFunction.invoke(it) }
+        publish(lazyPublishEventList)
+        return result
     }
 
     /**
