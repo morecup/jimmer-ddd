@@ -7,6 +7,7 @@ annotation class AggregatedField(
     /**
      * 聚合类型
      * 用于指定当前属性是否属于聚合的一部分。
+     * 如果聚合根属性上未标明AggregatedField注解，则启用默认策略 DEFAULT。
      */
     val type: AggregationType = AggregationType.AGGREGATED,
     /**

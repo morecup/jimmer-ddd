@@ -15,6 +15,9 @@ import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 
+/**
+ * 能够根据提供的函数，自动分析需要查找哪些字段，如果function为null，则查找所有聚合字段（如何判断聚合字段可查看AggregatedField注解说明）
+ */
 fun <T : Any> KSqlClient.findById(type: KClass<T>, id: Any,function: KFunction<*>?): T?{
     val fetcher: Fetcher<T> = if (function == null) {
         FetcherImpl(type.java).allAggregationFields()
@@ -24,6 +27,9 @@ fun <T : Any> KSqlClient.findById(type: KClass<T>, id: Any,function: KFunction<*
     return this.findById(fetcher,id)
 }
 
+/**
+ * 能够根据提供的函数，自动分析需要查找哪些字段，如果function为null，则查找所有聚合字段（如何判断聚合字段可查看AggregatedField注解说明）
+ */
 inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, function: KFunction<*>?): E?{
     val fetcher: Fetcher<E> = if (function == null) {
         FetcherImpl(E::class.java).allAggregationFields()
@@ -33,6 +39,9 @@ inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, 
     return findById(id,fetcher)
 }
 
+/**
+ * 用于保存聚合根，实现类似hibernate的任意保存功能，并且能够保存Draft对象
+ */
 fun <E: Any> KSqlClient.saveAggregate(
     entity: E,
     mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
@@ -47,6 +56,9 @@ fun <E: Any> KSqlClient.saveAggregate(
     return save(baseAssociatedFixed(impl), mode, associatedMode, block)
 }
 
+/**
+ * 用于保存聚合根，实现类似hibernate的任意保存功能，并且能够保存Draft对象
+ */
 fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregate(
     entity: E,
     mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
