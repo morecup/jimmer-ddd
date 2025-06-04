@@ -26,7 +26,16 @@ internal class ProxyContext<T,P>(
     }
 }
 data class ProxyResult<T,P>(
+    /**
+     * 需要保存的实体，该实体只包含被修改的属性，其他属性为unload
+     */
     val changed: T,
+    /**
+     * lambda执行结果
+     */
     val result: P,
+    /**
+     * 需要懒加载发布的事件列表（聚合内lazyPublishEvent的事件不会立刻发布，会直接返回成列表）
+     */
     val lazyPublishEventList: List<Any>
 )

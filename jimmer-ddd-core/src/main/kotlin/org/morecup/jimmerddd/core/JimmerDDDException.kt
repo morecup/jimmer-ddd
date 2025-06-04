@@ -1,6 +1,9 @@
 package org.morecup.jimmerddd.core
 
-open class JimmerDDDException @JvmOverloads constructor(
-    message: String = "",
-    cause: Throwable? = null
-) : RuntimeException(message, cause)
+open class JimmerDDDException  : RuntimeException{
+    constructor(cause: Throwable?) : super(cause)
+
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
+
+    constructor(message: String?) : super(message)
+}
