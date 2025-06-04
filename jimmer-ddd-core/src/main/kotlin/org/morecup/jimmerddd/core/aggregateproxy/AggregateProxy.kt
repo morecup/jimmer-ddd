@@ -77,6 +77,7 @@ open class AggregateProxy<P : Any> @JvmOverloads constructor(
 
     /**
      * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSave
+     * 相同的属性，后面的会覆盖前面的
      */
     fun <R> execMultiAndSave(vararg bases: Any, implProcessor: (P) -> R): R {
         val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
