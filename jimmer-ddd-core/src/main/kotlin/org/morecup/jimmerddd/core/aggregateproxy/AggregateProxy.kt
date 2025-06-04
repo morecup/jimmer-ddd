@@ -51,8 +51,7 @@ open class AggregateProxy<P : Any> @JvmOverloads constructor(
      * @param bases 多个数据库实体
      */
     fun <R> execMulti(vararg bases: Any, implProcessor: (P) -> R): MultiProxyResult<R> {
-        val arrayBases = arrayListOf(bases)
-        val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
+        val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
         return context.execute(implProcessor)
     }
 
@@ -60,8 +59,7 @@ open class AggregateProxy<P : Any> @JvmOverloads constructor(
      * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSave
      */
     fun <R> execMultiAndSave(vararg bases: Any, implProcessor: (P) -> R): R {
-        val arrayBases = arrayListOf(bases)
-        val context = ProxyContextMulti<P>(arrayBases, implInterfaceClass, findByIdFunction)
+        val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
         changed.forEach { saveEntityFunction.invoke(it) }
         publish(lazyPublishEventList)

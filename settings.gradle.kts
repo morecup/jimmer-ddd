@@ -26,6 +26,5 @@ rootProject.name = "better-ddd"
 include("jimmer-ddd-core")
 include("jimmer-ddd-kotlin")
 include("jimmer-ddd-java")
-include("Jimmer-ddd-kotlin-spring-boot-starter")
-include("Jimmer-ddd-java-spring-boot-starter")
-include("Jimmer-ddd-java-spring-boot-starter")
+include("jimmer-ddd-kotlin-spring-boot-starter")
+include("jimmer-ddd-java-spring-boot-starter")
