@@ -24,11 +24,11 @@ object MultiEntityFactory {
         return multiEntityProxy.proxy as T
     }
 
-    fun <T : Any> create(entityClass: KClass<T>, spiList: List<ImmutableSpi>):T{
+    fun <T : Any> create(entityClass: KClass<T>, spiList: List<Any>):T{
         return create(entityClass.java,spiList)
     }
 
-    fun <T : Any> create(entityClass: KClass<T>, vararg spiList: ImmutableSpi):T{
+    fun <T : Any> create(entityClass: KClass<T>, vararg spiList: Any):T{
         return create(entityClass.java,spiList.toList())
     }
 }
