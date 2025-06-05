@@ -1,5 +1,6 @@
 package org.morecup.jimmerddd.kotlin.spring.preanalysis
 
+import org.babyfish.jimmer.ImmutableObjects.isIdOnly
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.spring.repo.KotlinRepository
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
@@ -11,6 +12,7 @@ import org.babyfish.jimmer.sql.kt.ast.mutation.KSaveCommandPartialDsl
 import org.babyfish.jimmer.sql.kt.ast.mutation.KSimpleSaveResult
 import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.aggregateproxy.baseAssociatedFixed
+import org.morecup.jimmerddd.core.aggregateproxy.isIdLoaded
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory
 import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
@@ -46,8 +48,6 @@ inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, 
  */
 fun <E: Any> KSqlClient.saveAggregate(
     entity: E,
-    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
-    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
     block: (KSaveCommandPartialDsl.() -> Unit)? = null
 ): KSimpleSaveResult<E> {
     val impl = if (entity is DraftSpi){
@@ -55,16 +55,14 @@ fun <E: Any> KSqlClient.saveAggregate(
     }else{
         entity
     }
-    return save(baseAssociatedFixed(impl), mode, associatedMode, block)
+    return save(baseAssociatedFixed(impl),if(isIdLoaded(impl))SaveMode.UPDATE_ONLY else SaveMode.INSERT_ONLY, AssociatedSaveMode.REPLACE, block)
 }
 
 fun <E: MultiEntity> KSqlClient.saveMultiEntityAggregate(
     entity: E,
-    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
-    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
     block: (KSaveCommandPartialDsl.() -> Unit)? = null
 ): E {
-    val list = entity.toEntityList().map { saveAggregate(it, mode, associatedMode, block).modifiedEntity }
+    val list = entity.toEntityList().map { saveAggregate(it,  block).modifiedEntity }
 
     return MultiEntityFactory.create(entity.entityClass() as Class<E>,list)
 }
@@ -74,8 +72,6 @@ fun <E: MultiEntity> KSqlClient.saveMultiEntityAggregate(
  */
 fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregate(
     entity: E,
-    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
-    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
     block: (KSaveCommandPartialDsl.() -> Unit)? = null
 ): KSimpleSaveResult<E>{
     val impl = if (entity is DraftSpi){
@@ -83,5 +79,6 @@ fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregate(
     }else{
         entity
     }
-    return save(baseAssociatedFixed(impl), mode, associatedMode, block)
+    return save(baseAssociatedFixed(impl),if(isIdLoaded(impl))SaveMode.UPDATE_ONLY else SaveMode.INSERT_ONLY, AssociatedSaveMode.REPLACE, block)
+
 }

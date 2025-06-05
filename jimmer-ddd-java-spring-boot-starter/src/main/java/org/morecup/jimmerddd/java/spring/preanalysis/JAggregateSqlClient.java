@@ -15,6 +15,8 @@ import java.lang.invoke.SerializedLambda;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtendKt.isIdLoaded;
+
 public class JAggregateSqlClient {
     public JSqlClient sqlClient;
 
@@ -35,7 +37,13 @@ public class JAggregateSqlClient {
         if (entity instanceof DraftSpi) {
             impl = (T)((DraftSpi) entity).__resolve();
         }
-        return sqlClient.saveCommand(BaseAssociatedFixedKt.baseAssociatedFixed(entity)).setMode(SaveMode.NON_IDEMPOTENT_UPSERT).setAssociatedModeAll(AssociatedSaveMode.REPLACE).execute();
+        SaveMode saveMode = null;
+        if (isIdLoaded(impl)) {
+            saveMode = SaveMode.UPDATE_ONLY;
+        }else {
+            saveMode = SaveMode.INSERT_ONLY;
+        }
+        return sqlClient.saveCommand(BaseAssociatedFixedKt.baseAssociatedFixed(entity)).setMode(saveMode).setAssociatedModeAll(AssociatedSaveMode.REPLACE).execute();
     }
 
     public <T extends MultiEntity> T saveMultiEntityAggregate(T entity){
