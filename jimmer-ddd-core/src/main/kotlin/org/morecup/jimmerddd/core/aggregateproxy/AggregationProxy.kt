@@ -29,7 +29,7 @@ internal open class AggregationProxy(
         }else if (method == lazyPublishMethod){
             lazyPublishEventList.add(args!![0])
         }
-        return false to null
+        return true to null
     }
 }
 
