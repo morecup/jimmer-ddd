@@ -11,6 +11,8 @@ import org.babyfish.jimmer.sql.kt.ast.mutation.KSaveCommandPartialDsl
 import org.babyfish.jimmer.sql.kt.ast.mutation.KSimpleSaveResult
 import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.aggregateproxy.baseAssociatedFixed
+import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity
+import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory
 import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -54,6 +56,17 @@ fun <E: Any> KSqlClient.saveAggregate(
         entity
     }
     return save(baseAssociatedFixed(impl), mode, associatedMode, block)
+}
+
+fun <E: MultiEntity> KSqlClient.saveMultiEntityAggregate(
+    entity: E,
+    mode: SaveMode = SaveMode.NON_IDEMPOTENT_UPSERT,
+    associatedMode: AssociatedSaveMode = AssociatedSaveMode.REPLACE,
+    block: (KSaveCommandPartialDsl.() -> Unit)? = null
+): E {
+    val list = entity.toEntityList().map { saveAggregate(it, mode, associatedMode, block).modifiedEntity }
+
+    return MultiEntityFactory.create(entity.entityClass() as Class<E>,list)
 }
 
 /**
