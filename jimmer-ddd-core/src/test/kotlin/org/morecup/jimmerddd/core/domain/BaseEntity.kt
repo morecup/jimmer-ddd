@@ -10,7 +10,7 @@ import java.time.LocalDateTime
  * see CommonEntityDraftInterceptor
  */
 @MappedSuperclass
-interface BaseEntity {
+interface BaseEntity:AggregationEntity {
 
     @Id
     @GeneratedValue(generatorType = SnowflakeIdGenerator::class)

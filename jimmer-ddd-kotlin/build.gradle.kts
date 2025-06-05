@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(project(":jimmer-ddd-core"))
-    compileOnly(libs.jimmer.sql)
+    compileOnly(libs.jimmer.sql.kotlin)
     testImplementation(kotlin("test"))
 }
 

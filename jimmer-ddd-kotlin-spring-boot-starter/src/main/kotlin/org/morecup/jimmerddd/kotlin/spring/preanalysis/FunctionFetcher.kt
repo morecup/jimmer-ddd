@@ -13,10 +13,10 @@ import org.babyfish.jimmer.sql.kt.ast.mutation.KSaveCommandPartialDsl
 import org.babyfish.jimmer.sql.kt.ast.mutation.KSimpleSaveResult
 import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.aggregateproxy.baseAssociatedFixed
-import org.morecup.jimmerddd.core.aggregateproxy.isIdLoaded
 import org.morecup.jimmerddd.core.aggregateproxy.isIdOnly
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory
+import org.morecup.jimmerddd.core.sqlclient.checkIsInsertOrUpdate
 import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -63,7 +63,8 @@ fun <E: Any> KSqlClient.saveAggregate(
     }else{
         entity
     }
-    return save(baseAssociatedFixed(impl),if(isIdLoaded(impl))SaveMode.UPDATE_ONLY else SaveMode.INSERT_ONLY, AssociatedSaveMode.REPLACE, block)
+    val saveMode = if (checkIsInsertOrUpdate(impl)) SaveMode.INSERT_ONLY else SaveMode.UPDATE_ONLY
+    return save(baseAssociatedFixed(impl),saveMode, AssociatedSaveMode.REPLACE, block)
 }
 
 fun <E: MultiEntity> KSqlClient.saveMultiEntityAggregate(
@@ -87,6 +88,7 @@ fun <E: Any, ID : Any> KotlinRepository<E, ID>.saveAggregate(
     }else{
         entity
     }
-    return save(baseAssociatedFixed(impl),if(isIdLoaded(impl))SaveMode.UPDATE_ONLY else SaveMode.INSERT_ONLY, AssociatedSaveMode.REPLACE, block)
+    val saveMode = if (checkIsInsertOrUpdate(impl)) SaveMode.INSERT_ONLY else SaveMode.UPDATE_ONLY
+    return save(baseAssociatedFixed(impl),saveMode, AssociatedSaveMode.REPLACE, block)
 
 }
