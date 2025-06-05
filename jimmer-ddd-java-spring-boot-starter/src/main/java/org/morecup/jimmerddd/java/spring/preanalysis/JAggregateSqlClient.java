@@ -5,7 +5,11 @@ import org.babyfish.jimmer.sql.JSqlClient;
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode;
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode;
 import org.babyfish.jimmer.sql.ast.mutation.SimpleSaveResult;
+import org.babyfish.jimmer.sql.fetcher.Fetcher;
+import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl;
 import org.morecup.jimmerddd.core.aggregateproxy.BaseAssociatedFixedKt;
+import org.morecup.jimmerddd.core.aggregateproxy.FetcherImplExtension;
+import org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtend;
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity;
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory;
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo;
@@ -15,7 +19,8 @@ import java.lang.invoke.SerializedLambda;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtendKt.isIdLoaded;
+import static org.babyfish.jimmer.ImmutableObjects.makeIdOnly;
+import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtensionKt.isIdLoaded;
 
 public class JAggregateSqlClient {
     public JSqlClient sqlClient;
@@ -25,11 +30,29 @@ public class JAggregateSqlClient {
     }
 
     public <T> T findById(Class<T> entityClazz, MethodInfo methodInfo, Long id) {
-        return sqlClient.findById(FunctionFetcher.of(entityClazz,methodInfo), id);
+        Fetcher<T> fetcher= null;
+        if (methodInfo == null) {
+            fetcher = FetcherImplExtension.allAggregationFields(new FetcherImpl<T>(entityClazz));
+        }else{
+            fetcher = FunctionFetcher.of(entityClazz,methodInfo);
+        }
+        if (ImmutableSpiExtend.isIdOnly(fetcher)){
+            return makeIdOnly(entityClazz,id);
+        }
+        return sqlClient.findById(fetcher, id);
     }
 
     public <T> T findById(Class<T> entityClazz, SerializedLambda serializedLambda, Long id) {
-        return sqlClient.findById(FunctionFetcher.of(entityClazz,serializedLambda), id);
+        Fetcher<T> fetcher= null;
+        if (serializedLambda == null) {
+            fetcher = FetcherImplExtension.allAggregationFields(new FetcherImpl<T>(entityClazz));
+        }else{
+            fetcher = FunctionFetcher.of(entityClazz,serializedLambda);
+        }
+        if (ImmutableSpiExtend.isIdOnly(fetcher)){
+            return makeIdOnly(entityClazz,id);
+        }
+        return sqlClient.findById(fetcher, id);
     }
 
     public <T> SimpleSaveResult<T> saveAggregate(T entity){

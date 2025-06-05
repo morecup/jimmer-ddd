@@ -1,3 +1,4 @@
+@file:JvmName("FetcherImplExtension")
 package org.morecup.jimmerddd.core.aggregateproxy
 
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
@@ -5,6 +6,7 @@ import org.babyfish.jimmer.sql.fetcher.impl.FetcherImplementor
 import org.morecup.jimmerddd.core.annotation.AggregatedField
 import org.morecup.jimmerddd.core.annotation.AggregationType
 
+@JvmOverloads
 fun <E> FetcherImpl<E>.allAggregationFields(loadedClassList:List<Class<*>> = arrayListOf()):FetcherImplementor<E> {
     var fetcher:FetcherImplementor<E> = this
     for (prop in immutableType.props.values) {

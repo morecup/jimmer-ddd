@@ -1,18 +1,20 @@
 package org.morecup.jimmerddd.kotlin.spring.preanalysis
 
-import org.babyfish.jimmer.ImmutableObjects.isIdOnly
+import org.babyfish.jimmer.ImmutableObjects.makeIdOnly
 import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.spring.repo.KotlinRepository
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.fetcher.Fetcher
 import org.babyfish.jimmer.sql.fetcher.impl.FetcherImpl
+import org.babyfish.jimmer.sql.fetcher.impl.FetcherImplementor
 import org.babyfish.jimmer.sql.kt.KSqlClient
 import org.babyfish.jimmer.sql.kt.ast.mutation.KSaveCommandPartialDsl
 import org.babyfish.jimmer.sql.kt.ast.mutation.KSimpleSaveResult
 import org.morecup.jimmerddd.core.aggregateproxy.allAggregationFields
 import org.morecup.jimmerddd.core.aggregateproxy.baseAssociatedFixed
 import org.morecup.jimmerddd.core.aggregateproxy.isIdLoaded
+import org.morecup.jimmerddd.core.aggregateproxy.isIdOnly
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory
 import org.morecup.jimmerddd.kotlin.preanalysis.analysisFunctionFetcher
@@ -23,10 +25,13 @@ import kotlin.reflect.KFunction
  * 能够根据提供的函数，自动分析需要查找哪些字段，如果function为null，则查找所有聚合字段（如何判断聚合字段可查看AggregatedField注解说明）
  */
 fun <T : Any> KSqlClient.findById(type: KClass<T>, id: Any,function: KFunction<*>?): T?{
-    val fetcher: Fetcher<T> = if (function == null) {
+    val fetcher: FetcherImplementor<T> = if (function == null) {
         FetcherImpl(type.java).allAggregationFields()
     }else{
         analysisFunctionFetcher(type,function)
+    }
+    if (fetcher.isIdOnly()){
+        return makeIdOnly(type.java,id)
     }
     return this.findById(fetcher,id)
 }
@@ -39,6 +44,9 @@ inline fun <reified E : Any, ID : Any> KotlinRepository<E, ID>.findById(id: ID, 
         FetcherImpl(E::class.java).allAggregationFields()
     }else{
         analysisFunctionFetcher(E::class,function)
+    }
+    if (fetcher.isIdOnly()){
+        return makeIdOnly(E::class.java,id)
     }
     return findById(id,fetcher)
 }
