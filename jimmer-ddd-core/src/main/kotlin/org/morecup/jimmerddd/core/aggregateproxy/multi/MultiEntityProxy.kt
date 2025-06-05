@@ -57,7 +57,11 @@ internal open class MultiEntityProxy(
             }
 //            判断是否是MultiEntity的方法
             if (method.declaringClass == MultiEntity::class.java){
-                return propNameEntityManager.entityList
+                if (method.name == "toEntityList"){
+                    return propNameEntityManager.entityList
+                }else{
+                    return proxyClass
+                }
             }
             val (success, result) = handleOtherMethod(proxy, method, args)
             if (success) {

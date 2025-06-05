@@ -1,5 +1,6 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
+import javafx.scene.input.KeyCode.M
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.SaveEntityFunction
@@ -50,42 +51,22 @@ open class AggregateProxy<P : Any> @JvmOverloads constructor(
     /**
      * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSaveRM
      */
-    fun <R> execMulti(multiEntity: MultiEntity, implProcessor: (P) -> R): MultiProxyResult<R> {
-        val context = ProxyContextMulti<P>(multiEntity.toEntityList(), implInterfaceClass, findByIdFunction)
-        return context.execute(implProcessor)
-    }
-
-    /**
-     * 支持多数据库实体映射单个聚合根的场景，其他功能等效exec
-     * @param bases 多个数据库实体
-     */
-    fun <R> execMulti(vararg bases: Any, implProcessor: (P) -> R): MultiProxyResult<R> {
-        val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
+    fun <M : MultiEntity, R> execMulti(multiEntity: M, implProcessor: (P) -> R): MultiProxyResult<R, M> {
+        val context = ProxyContextMulti<P,M>(multiEntity, implInterfaceClass, findByIdFunction)
         return context.execute(implProcessor)
     }
 
     /**
      * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSave
      */
-    fun <R> execMultiAndSave(multiEntity: MultiEntity, implProcessor: (P) -> R): R {
-        val context = ProxyContextMulti<P>(multiEntity.toEntityList(), implInterfaceClass, findByIdFunction)
+    fun <M : MultiEntity, R> execMultiAndSave(multiEntity: M, implProcessor: (P) -> R): R {
+        val context = ProxyContextMulti<P,M>(multiEntity, implInterfaceClass, findByIdFunction)
         val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
-        changed.forEach { saveEntityFunction.invoke(it) }
+        changed.toEntityList().forEach { saveEntityFunction.invoke(it) }
         publish(lazyPublishEventList)
         return result
     }
 
-    /**
-     * 支持多数据库实体映射单个聚合根的场景，其他功能等效execAndSave
-     * 相同的属性，后面的会覆盖前面的
-     */
-    fun <R> execMultiAndSave(vararg bases: Any, implProcessor: (P) -> R): R {
-        val context = ProxyContextMulti<P>(bases.toList(), implInterfaceClass, findByIdFunction)
-        val (changed, result, lazyPublishEventList) = context.execute(implProcessor)
-        changed.forEach { saveEntityFunction.invoke(it) }
-        publish(lazyPublishEventList)
-        return result
-    }
 }
 
 data class ProxyResultRM<T,P>(
