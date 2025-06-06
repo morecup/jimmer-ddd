@@ -16,17 +16,15 @@ import org.springframework.context.event.EventListener;
 @AutoConfiguration(after = JimmerAutoConfiguration.class)
 public class JavaJimmerDDDConfiguration {
 
-    private final JSqlClientImplementor jSqlClient;
     private final ApplicationContext applicationContext;
 
-    public JavaJimmerDDDConfiguration(JSqlClientImplementor jSqlClient, ApplicationContext applicationContext) {
-        this.jSqlClient = jSqlClient;
+    public JavaJimmerDDDConfiguration(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
     @Bean
     public JAggregateSqlClient jAggregateSqlClient() {
-        return new JAggregateSqlClient(jSqlClient);
+        return new JAggregateSqlClient(applicationContext);
     }
 
     @Bean
@@ -36,6 +34,7 @@ public class JavaJimmerDDDConfiguration {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onContextRefreshed() {
+        JSqlClientImplementor jSqlClient = applicationContext.getBean(JSqlClientImplementor.class);
         // 配置查询函数
         JimmerDDDConfig.setFindByIdFunction(jSqlClient::findById);
 

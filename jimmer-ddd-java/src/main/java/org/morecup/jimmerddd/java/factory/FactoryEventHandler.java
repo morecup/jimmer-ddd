@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.java.spring.factory;
+package org.morecup.jimmerddd.java.factory;
 
 import org.jetbrains.annotations.NotNull;
 import org.morecup.jimmerddd.core.event.EventHandler;

@@ -14,6 +14,7 @@ import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntity;
 import org.morecup.jimmerddd.core.aggregateproxy.multi.MultiEntityFactory;
 import org.morecup.jimmerddd.core.preanalysis.MethodInfo;
 import org.morecup.jimmerddd.java.preanalysis.FunctionFetcher;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.invoke.SerializedLambda;
 import java.util.List;
@@ -23,10 +24,14 @@ import static org.babyfish.jimmer.ImmutableObjects.makeIdOnly;
 import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtensionKt.isIdLoaded;
 
 public class JAggregateSqlClient {
-    public JSqlClient sqlClient;
+    public ApplicationContext applicationContext;
 
-    public JAggregateSqlClient(JSqlClient sqlClient) {
-        this.sqlClient = sqlClient;
+    public JSqlClient getSqlClient() {
+        return applicationContext.getBean(JSqlClient.class);
+    }
+
+    public JAggregateSqlClient(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     public <T> T findById(Class<T> entityClazz, MethodInfo methodInfo, Long id) {
@@ -39,7 +44,7 @@ public class JAggregateSqlClient {
         if (ImmutableSpiExtend.isIdOnly(fetcher)){
             return makeIdOnly(entityClazz,id);
         }
-        return sqlClient.findById(fetcher, id);
+        return getSqlClient().findById(fetcher, id);
     }
 
     public <T> T findById(Class<T> entityClazz, SerializedLambda serializedLambda, Long id) {
@@ -52,7 +57,7 @@ public class JAggregateSqlClient {
         if (ImmutableSpiExtend.isIdOnly(fetcher)){
             return makeIdOnly(entityClazz,id);
         }
-        return sqlClient.findById(fetcher, id);
+        return getSqlClient().findById(fetcher, id);
     }
 
     public <T> SimpleSaveResult<T> saveAggregate(T entity){
@@ -66,7 +71,7 @@ public class JAggregateSqlClient {
         }else {
             saveMode = SaveMode.INSERT_ONLY;
         }
-        return sqlClient.saveCommand(BaseAssociatedFixedKt.baseAssociatedFixed(entity)).setMode(saveMode).setAssociatedModeAll(AssociatedSaveMode.REPLACE).execute();
+        return getSqlClient().saveCommand(BaseAssociatedFixedKt.baseAssociatedFixed(entity)).setMode(saveMode).setAssociatedModeAll(AssociatedSaveMode.REPLACE).execute();
     }
 
     public <T extends MultiEntity> T saveMultiEntityAggregate(T entity){

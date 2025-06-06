@@ -10,6 +10,7 @@ import org.morecup.jimmerddd.java.spring.domain.goods.GoodsFactory;
 import org.morecup.jimmerddd.java.spring.domain.goods.GoodsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 
 @SpringBootTest(classes = Application.class)
 public class AggregateProxyTest {
@@ -18,6 +19,9 @@ public class AggregateProxyTest {
 
     @Autowired
     private GoodsFactory goodsFactory;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private static final Long testGoodsId = 1928974921409630208L;
 

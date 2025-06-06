@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.java.spring.factory;
+package org.morecup.jimmerddd.java.factory;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

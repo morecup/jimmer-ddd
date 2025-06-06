@@ -7,6 +7,9 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.morecup.jimmerddd.core.JimmerDDDConfig;
 import org.morecup.jimmerddd.core.event.EventManager;
+import org.morecup.jimmerddd.java.factory.FactoryContextManager;
+import org.morecup.jimmerddd.java.factory.JFactoryContext;
+import org.morecup.jimmerddd.java.factory.WithFactoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -24,7 +27,7 @@ public class JFactoryAop {
     private static final Logger logger = LoggerFactory.getLogger(JFactoryAop.class);
 
     // 定义切入点，拦截含有 WithFactoryContext 注解的方法
-    @Pointcut("@annotation(org.morecup.jimmerddd.java.spring.factory.WithFactoryContext)")
+    @Pointcut("@annotation(org.morecup.jimmerddd.java.factory.WithFactoryContext)")
     public void withFactoryContextPointcut() {}
 
     @Around("withFactoryContextPointcut()")

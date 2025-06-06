@@ -1,7 +1,7 @@
 package org.morecup.jimmerddd.java.spring.domain.goods;
 
-import org.morecup.jimmerddd.java.spring.factory.FactoryEventHandler;
-import org.morecup.jimmerddd.java.spring.factory.WithFactoryContext;
+import org.morecup.jimmerddd.java.factory.FactoryEventHandler;
+import org.morecup.jimmerddd.java.factory.WithFactoryContext;
 import org.springframework.stereotype.Component;
 
 @Component

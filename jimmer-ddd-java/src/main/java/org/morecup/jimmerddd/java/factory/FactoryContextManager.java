@@ -1,4 +1,4 @@
-package org.morecup.jimmerddd.java.spring.factory;
+package org.morecup.jimmerddd.java.factory;
 
 import java.util.Stack;
 
