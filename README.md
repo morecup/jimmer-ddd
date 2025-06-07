@@ -21,7 +21,7 @@ jimmer-ddd不仅是对jimmer的扩展，更是对ddd艺术的扩展和诠释
 
 9. jimmer-ddd还能够将数据库多表映射到单聚合根上(不是通过关联关系)，极大的增强了映射能力
 
-10. jimmer-ddd是编译期依赖，你可以兼容任何版本的jimmer，甚至魔改和自编译版本的jimmer
+10. jimmer-ddd是编译期依赖，可以兼容任何版本的jimmer，甚至魔改和自编译版本的jimmer
 
 ### 下面是jimmer框架在ddd中的优势：
 jimmer-dto减少ddd中大量的类转化代码
