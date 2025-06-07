@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.babyfish.jimmer.ImmutableObjects.makeIdOnly;
-import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtensionKt.isIdLoaded;
+import static org.morecup.jimmerddd.core.aggregateproxy.ImmutableSpiExtension.isIdLoaded;
 
 public class JAggregateSqlClient {
     public ApplicationContext applicationContext;
