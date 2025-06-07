@@ -65,8 +65,8 @@ implementation("io.github.morecup.jimmer-ddd:jimmer-ddd-kotlin-spring-boot-start
 最新版本可以去 https://central.sonatype.com/artifact/io.github.morecup.jimmer-ddd/jimmer-ddd-kotlin-spring-boot-starter 查看
 
 ## todo
-1. 关联对象保存时，自动不保存没有修改的关联对象
+1. 关联对象保存时，自动不保存没有修改的关联对象（可能涉及到定制化jimmer）
 
 ## 交流
-QQ群：1004064009
+QQ群：1041852155
 欢迎加入QQ群交流，一起学习和进步
