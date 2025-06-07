@@ -9,7 +9,7 @@ jimmer-ddd不仅是对jimmer的扩展，更是对ddd艺术的扩展和诠释
 
 3. jimmer-ddd实现了仅update更新过的字段，即仅更新需要更新的字段
 
-4. jimmer-ddd性能极强，显著强于hibernate ，一是jimmer-ddd做到了在操作处理orm对象的情况下，查询和修改都和原生sql一致，二是关键对象也能做到预分析，仅查询需要的属性，达到性能比肩原生sql的炸裂效果。
+4. jimmer-ddd性能极强，显著强于hibernate ，一是jimmer-ddd做到了在操作处理orm对象的情况下，查询和修改都和原生sql一致，二是关联对象也能做到预分析，仅查询需要的属性，达到性能比肩原生sql的炸裂效果。
 
 5. jimmer-ddd实现了任意字段懒加载，并且仅需一个注解搞定，显著强于hibernate
 
@@ -23,8 +23,7 @@ jimmer-ddd不仅是对jimmer的扩展，更是对ddd艺术的扩展和诠释
 
 10. jimmer-ddd是编译期依赖，可以兼容任何版本的jimmer，甚至魔改和自编译版本的jimmer
 
-### 下面是jimmer框架在ddd中的优势：
-jimmer-dto减少ddd中大量的类转化代码
+11. 得益于jimmer-dto，能够减少ddd中不同类的对象转化代码
 
 ## 谁要是还说ddd影响性能，你就把jimmer-ddd拍他脸上让他说话！！
 
