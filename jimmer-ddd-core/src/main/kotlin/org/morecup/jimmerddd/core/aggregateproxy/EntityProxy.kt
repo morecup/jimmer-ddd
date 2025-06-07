@@ -117,7 +117,7 @@ internal open class EntityProxy(
             method.invoke(propNameDraftManager.tempDraft, *args.orEmpty())
             return method.invoke(propNameDraftManager.changedDraft, *args.orEmpty())
         }
-        private val lookups = mutableMapOf<Class<*>, MethodHandles.Lookup>()
+//        private val lookups = mutableMapOf<Class<*>, MethodHandles.Lookup>()
 
 //        private fun invokeDefaultMethod(proxy:Any?, method:Method, args: Array<Any>?):Any? {
 //            try {

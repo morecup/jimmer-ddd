@@ -41,30 +41,30 @@ jimmer-ddd不仅是对jimmer的扩展，更是对ddd艺术的扩展和诠释
 <dependency>
     <groupId>io.github.morecup.jimmer-ddd</groupId>
     <artifactId>jimmer-ddd-java-spring-boot-starter</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.4</version>
 </dependency>
 ```
 gradle
 ```groovy
-implementation("io.github.morecup.jimmer-ddd:jimmer-ddd-java-spring-boot-starter:0.2.2")
+implementation("io.github.morecup.jimmer-ddd:jimmer-ddd-java-spring-boot-starter:0.2.4")
 ```
 #### kotlin
 ```xml
 <dependency>
     <groupId>io.github.morecup.jimmer-ddd</groupId>
     <artifactId>jimmer-ddd-kotlin-spring-boot-starter</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.4</version>
 </dependency>
 ```
 gradle
 ```groovy
-implementation("io.github.morecup.jimmer-ddd:jimmer-ddd-kotlin-spring-boot-starter:0.2.2")
+implementation("io.github.morecup.jimmer-ddd:jimmer-ddd-kotlin-spring-boot-starter:0.2.4")
 ```
 ### 后续更新
 最新版本可以去 https://central.sonatype.com/artifact/io.github.morecup.jimmer-ddd/jimmer-ddd-kotlin-spring-boot-starter 查看
 
 ## todo
-1. 关联对象保存时，自动不保存没有修改的关联对象（可能涉及到定制化jimmer）
+1. 关联对象保存时，自动不保存没有修改的关联对象（已经在0.2.3解决）
 
 ## 交流
 QQ群：1041852155

@@ -2,7 +2,7 @@ package org.morecup.jimmerddd.core.annotation
 
 
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.PROPERTY,AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.PROPERTY,AnnotationTarget.FUNCTION,AnnotationTarget.PROPERTY_GETTER,AnnotationTarget.PROPERTY_SETTER)
 annotation class AggregatedField(
     /**
      * 聚合类型
