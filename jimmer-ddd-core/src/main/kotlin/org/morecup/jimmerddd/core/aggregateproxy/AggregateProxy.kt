@@ -1,6 +1,5 @@
 package org.morecup.jimmerddd.core.aggregateproxy
 
-import javafx.scene.input.KeyCode.M
 import org.morecup.jimmerddd.core.FindByIdFunction
 import org.morecup.jimmerddd.core.JimmerDDDConfig
 import org.morecup.jimmerddd.core.SaveEntityFunction

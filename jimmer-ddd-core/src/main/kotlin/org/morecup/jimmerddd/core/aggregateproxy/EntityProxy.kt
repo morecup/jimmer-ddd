@@ -92,6 +92,7 @@ internal open class EntityProxy(
             }
             toSetterPropNameOrNull(method)?.let {
                 handleSetter(it, args?.first())
+                if (method.declaringClass == method.returnType) return proxy
                 return null
             }
 //            // 添加对 hashCode() 方法的处理
@@ -108,6 +109,12 @@ internal open class EntityProxy(
             if (success) {
                 return result
             }
+            if (method.name.startsWith("addInto")||method.name.startsWith("apply")) {
+                method.invoke(propNameDraftManager.tempDraft, *args.orEmpty())
+                method.invoke(propNameDraftManager.changedDraft, *args.orEmpty())
+                return proxy
+            }
+            method.invoke(propNameDraftManager.tempDraft, *args.orEmpty())
             return method.invoke(propNameDraftManager.changedDraft, *args.orEmpty())
         }
         private val lookups = mutableMapOf<Class<*>, MethodHandles.Lookup>()
@@ -143,7 +150,7 @@ internal open class EntityProxy(
 //        }
 
         private fun toGetterPropNameOrNull(method: Method): String? {
-            if (method.parameterCount == 0 && (method.returnType != Void.TYPE && method.returnType != Unit::class.java)){
+            if ((method.parameterCount == 0||(method.parameterCount == 1&& method.parameterTypes[0] == Boolean::class.java)) && (method.returnType != Void.TYPE && method.returnType != Unit::class.java)){
                 val methodName = method.name
                 val propName = if (methodName.startsWith("get")) {
                     methodName.substring(3)

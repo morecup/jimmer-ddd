@@ -11,7 +11,7 @@ internal class SingleSpiPropNameManager(
 ): IPropNameDraftManager {
     private val type = spi.__type()
 
-    private val tempDraft = draftContext.toDraftObject<Any>(spi).let { it as DraftSpi }
+    override val tempDraft = draftContext.toDraftObject<Any>(spi).let { it as DraftSpi }
 
     override val changedDraft = type.draftFactory.apply(draftContext, null).let {
         it as DraftSpi

@@ -5,6 +5,7 @@ import org.babyfish.jimmer.runtime.DraftSpi
 
 interface IPropNameDraftManager {
     val changedDraft: DraftSpi
+    val tempDraft: DraftSpi
     val proxyClass:Class<*>
     fun getPropByName(propName: String): ImmutableProp
     fun contains(propName: String): Boolean

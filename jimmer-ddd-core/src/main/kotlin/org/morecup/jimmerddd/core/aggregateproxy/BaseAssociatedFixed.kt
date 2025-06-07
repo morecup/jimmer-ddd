@@ -36,6 +36,9 @@ fun <T> baseAssociatedFixed(base:T,autoAddListId: Boolean = true): T {
                             if (!itemSpi.__isLoaded(itemIdPropId)&&autoAddListId){
                                 val newItem = Internal.produce(prop.targetType, itemSpi){
                                     (it as DraftSpi).__set(itemIdPropId, getIdGeneratorFunction().invoke(prop.targetType.javaClass))
+                                    if (itemType.props.containsKey("idPreLoaded")){
+                                        it.__set("idPreLoaded",true)
+                                    }
                                 }
                                 return@mapNotNull baseAssociatedFixed(newItem,true)
                             }

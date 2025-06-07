@@ -22,7 +22,7 @@ plugins {
 include(":app")
 include(":utils")
 
-rootProject.name = "better-ddd"
+rootProject.name = "jimmer-ddd"
 include("jimmer-ddd-core")
 include("jimmer-ddd-kotlin")
 include("jimmer-ddd-java")

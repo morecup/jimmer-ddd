@@ -19,8 +19,9 @@ fun <T : Any> analysisMethodFetcher(entityClazz: Class<T>, methodInfo: MethodInf
         val analyzeMethods: MutableSet<MethodInfo> = ClassMethodAnalyzer.analyzeMethods(t.methodInfo)
         val neededGetFieldNameSet = analyzeMethods.filter {
 //        it.ownerClass == function.javaMethod?.declaringClass?.name&&
-            it.desc.startsWith("()")&&
+            (it.desc.startsWith("()")||it.desc.startsWith("(Z)"))&&
                     it.desc!="()V" }.map {
+            if (it.desc.startsWith("(Z)")){ it.desc = it.desc.replace("(Z)","()")}
             if (it.ownerClass.endsWith("Draft")){ it.ownerClass = it.ownerClass.substring(0, it.ownerClass.length - "Draft".length)}
             if (it.name.startsWith("get")){ it.name = it.name.substring(3).replaceFirstChar { it.lowercase() }}
             if (it.desc.endsWith("Draft;")){ it.desc = it.desc.substring(0, it.desc.length - "Draft;".length) + ";"}

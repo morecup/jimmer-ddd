@@ -37,6 +37,9 @@ internal class MultiSpiPropNameManager(
     override val changedDraft: DraftSpi
         get() = changedDraftList[0]
 
+    override val tempDraft: DraftSpi
+        get() = propNameDraftInfoMap.values.first().tempDraft
+
     data class PropNameDraftInfo(
         val spi: ImmutableSpi,
         val tempDraft: DraftSpi,

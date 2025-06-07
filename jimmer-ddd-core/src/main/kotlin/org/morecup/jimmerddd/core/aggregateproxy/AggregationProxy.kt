@@ -26,10 +26,12 @@ internal open class AggregationProxy(
     override fun handleOtherMethod(proxy: Any, method: Method, args: Array<Any>?): Pair<Boolean,Any?> {
         if (method == publishMethod){
             publish(args!![0])
+            return true to null
         }else if (method == lazyPublishMethod){
             lazyPublishEventList.add(args!![0])
+            return true to null
         }
-        return true to null
+        return false to null
     }
 }
 
