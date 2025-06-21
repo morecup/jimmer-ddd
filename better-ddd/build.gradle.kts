@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.aspect
 import org.gradle.kotlin.dsl.implementation
 
 plugins {
@@ -14,8 +13,9 @@ dependencies {
     implementation(libs.jimmer.sql)
     implementation("org.ow2.asm:asm:9.8")
 
-    implementation("org.aspectj:aspectjrt:1.9.6")
-    aspect("org.aspectj:aspectjweaver:1.9.6")
+    implementation("org.aspectj:aspectjrt:1.9.7")
+//    aspect("org.aspectj:aspectjweaver:1.9.7")
+    testAspect(project(":better-ddd"))
 
     implementation("org.ow2.asm:asm-tree:9.8")
     implementation("net.bytebuddy:byte-buddy:1.14.18")
