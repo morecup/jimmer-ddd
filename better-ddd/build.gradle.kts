@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.allopen") version "1.9.22" // 使用与Kotlin版本匹配的插件版本
 //    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.14.18"
     id("io.freefair.aspectj.post-compile-weaving") version "8.4"
+    kotlin("plugin.noarg") version "1.8.0"
 }
 
 
@@ -44,3 +45,6 @@ allOpen {
     annotation("org.morecup.jimmerddd.betterddd.annotation.AggregateRoot")
 }
 
+noArg {
+    annotation("org.morecup.jimmerddd.betterddd.annotation.AggregateRoot")
+}
