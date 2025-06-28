@@ -6,18 +6,18 @@ object OrmEntityOperatorConfig {
 }
 
 interface IOrmEntityOperator {
-    fun getEntityField(entity:Any,fieldPathStr:String):Any?
-    fun setEntityField(entity:Any,fieldPathStr:String,value:Any?)
+    fun getEntityField(entity:Any,fieldList:List<String>):Any?
+    fun setEntityField(entity:Any,fieldList:List<String>,value:Any?)
 }
 
 class DefaultOrmEntityOperator: IOrmEntityOperator {
-    override fun getEntityField(entity: Any, fieldPathStr: String): Any? {
-        println("entity:$entity, fieldPathStr:$fieldPathStr")
+    override fun getEntityField(entity: Any, fieldList: List<String>): Any? {
+        println("entity:$entity, fieldPathStr:$fieldList")
         return null
     }
 
-    override fun setEntityField(entity: Any, fieldPathStr: String, value: Any?) {
-        println("entity:$entity, fieldPathStr:$fieldPathStr,value:$value")
+    override fun setEntityField(entity: Any, fieldList: List<String>, value: Any?) {
+        println("entity:$entity, fieldPathStr:$fieldList,value:$value")
     }
 
 }

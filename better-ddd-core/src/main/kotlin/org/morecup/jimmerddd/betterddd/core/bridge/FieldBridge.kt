@@ -1,10 +1,11 @@
 package org.morecup.jimmerddd.betterddd.core.bridge
 
 import org.aspectj.lang.ProceedingJoinPoint
+import org.morecup.jimmerddd.betterddd.core.proxy.DomainAggregateRootField
 import java.lang.reflect.Field
 
 object FieldBridgeConfig {
-    var fieldBridge: IFieldBridge = DefaultFieldBridge()
+    var fieldBridge: IFieldBridge = DomainAggregateRootField()
 }
 
 class DefaultFieldBridge: IFieldBridge {
