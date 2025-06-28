@@ -9,7 +9,6 @@ plugins {
 
 dependencies {
     implementation("org.aspectj:aspectjrt:1.9.7")
-//    implementation(project(":better-ddd-aspect"))
     testAspect(project(":better-ddd-aspect"))
 
     compileOnly("org.slf4j:slf4j-api:2.0.7")
