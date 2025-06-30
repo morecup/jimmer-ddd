@@ -7,7 +7,7 @@ interface GoodsRepository {
      * 持久化Goods
      * @param goods 要保存的实体（按引用传递）
      */
-    fun saveGoods(goods: Goods): Goods
+    fun saveGoods(goods: Goods)
 
     /**
      * 查找并校验存在性

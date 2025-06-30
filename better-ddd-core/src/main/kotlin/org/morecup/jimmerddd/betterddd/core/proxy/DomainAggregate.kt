@@ -19,6 +19,10 @@ class DomainAggregateRoot {
             aggregateRootCache.put(aggregateRoot as Any, args.toList())
             return aggregateRoot
         }
+
+        fun findArgs(aggregateRoot: Any): List<Any>{
+           return aggregateRootCache.get(aggregateRoot)?:throw IllegalStateException("aggregateRootCache not found")
+        }
     }
 }
 val pattern = """^a(\d+)$""".toRegex()  // 正则匹配 a+数字 模式
@@ -51,7 +55,7 @@ class DomainAggregateRootField: IFieldBridge {
             entityValue = objects[0]
             entityFieldStr = fieldFullName
         }
-        return OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldStr)
+        return OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldStr.split("."))
     }
 
     override fun setFieldValue(
@@ -82,7 +86,7 @@ class DomainAggregateRootField: IFieldBridge {
             entityValue = objects[0]
             entityFieldStr = fieldFullName
         }
-        OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldStr, value)
+        OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldStr.split("."), value)
     }
 
 }
