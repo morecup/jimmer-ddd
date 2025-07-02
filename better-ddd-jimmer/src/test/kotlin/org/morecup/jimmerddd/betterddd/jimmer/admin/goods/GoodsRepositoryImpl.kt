@@ -13,7 +13,7 @@ open class GoodsRepositoryImpl(
     private val kSqlClient: KSqlClient
 ): GoodsRepository {
     override fun saveGoods(goods: Goods) {
-        val tempDraft = DomainAggregateRoot.findArgs(goods)[0] as DraftSpi
+        val tempDraft = DomainAggregateRoot.findOrmObjs(goods)[0] as DraftSpi
         val changed = tempDraft.__resolve()
         kSqlClient.save(changed)
         tempDraft.__draftContext().dispose()

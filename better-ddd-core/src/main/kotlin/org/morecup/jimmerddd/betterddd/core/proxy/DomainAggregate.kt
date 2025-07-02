@@ -4,12 +4,12 @@ import org.aspectj.lang.ProceedingJoinPoint
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmField
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
 import org.morecup.jimmerddd.betterddd.core.bridge.IFieldBridge
+import org.morecup.jimmerddd.betterddd.core.util.ConcurrentWeakHashMap
 import java.lang.reflect.Field
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.arrayOf
-import kotlin.collections.arrayListOf
 
-val aggregateRootCache = ConcurrentHashMap<Any, List<Any>>()
+//val aggregateRootCache = ConcurrentHashMap<Any, List<Any>>()
+var aggregateRootCache = ConcurrentWeakHashMap<Any, List<Any>>()
 
 class DomainAggregateRoot {
     companion object {
@@ -20,7 +20,7 @@ class DomainAggregateRoot {
             return aggregateRoot
         }
 
-        fun findArgs(aggregateRoot: Any): List<Any>{
+        fun findOrmObjs(aggregateRoot: Any): List<Any>{
            return aggregateRootCache.get(aggregateRoot)?:throw IllegalStateException("aggregateRootCache not found")
         }
     }
