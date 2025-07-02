@@ -6,10 +6,9 @@ import org.babyfish.jimmer.sql.Table
 import org.morecup.jimmerddd.betterddd.jimmer.admin.BaseEntity
 
 @Entity
-@Table(name = "goods")
-interface GoodsEntity : BaseEntity {
-    val name: String
-    val nowAddress: String
+@Table(name = "beijing_address")
+interface BeijingAddressEntity:BaseEntity {
+    val beijingAddressCode: String
 
     @OneToOne
     val addressEntity:AddressEntity

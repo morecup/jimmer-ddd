@@ -8,19 +8,19 @@ import org.morecup.jimmerddd.betterddd.core.bridge.MethodBridgeConfig
 @Aspect
 class MethodAccessAspect {
 
-    @Pointcut("execution(* *(..)) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.MethodAccessAspect)")
-    fun anyMethodExecution() {}
-
-    @Before("anyMethodExecution()")
-    fun beforeMethodExecution(pjp: ProceedingJoinPoint) {
-        val methodSignature = pjp.signature as MethodSignature
-        MethodBridgeConfig.methodBridge.beforeMethodInvocation(
-            pjp,
-            methodSignature.method,
-            pjp.target,
-            pjp.args
-        )
-    }
+//    @Pointcut("execution(* *(..)) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.MethodAccessAspect)")
+//    fun anyMethodExecution() {}
+//
+//    @Before("anyMethodExecution()")
+//    fun beforeMethodExecution(pjp: ProceedingJoinPoint) {
+//        val methodSignature = pjp.signature as MethodSignature
+//        MethodBridgeConfig.methodBridge.beforeMethodInvocation(
+//            pjp,
+//            methodSignature.method,
+//            pjp.target,
+//            pjp.args
+//        )
+//    }
 
 //    @AfterReturning(pointcut = "anyMethodExecution()", returning = "result")
 //    fun afterMethodExecution(pjp: ProceedingJoinPoint, result: Any?) {
