@@ -13,8 +13,11 @@ class Goods(
     private var nowAddress1: String,
     var id: Long?=null,
     @OrmFields(
-        ["goods:addressEntity","goods.addressEntity.beijingAddress","goods.addressEntity.hubeiAddress"],
-        [Address::class,BeijingAddress::class,HubeiAddress::class]
+        [
+            OrmField(columnName = "goods:addressEntity", columnType = Address::class),
+            OrmField(columnNames = ["goods:addressEntity.beijingAddress","goods:addressEntity.hubeiAddress"],
+                columnTypes = [BeijingAddress::class,HubeiAddress::class]),
+        ]
     )
     var address:Address,
 ){
