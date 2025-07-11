@@ -19,7 +19,7 @@ class Goods(
                 columnTypes = [BeijingAddress::class,HubeiAddress::class]),
         ]
     )
-    var address:Address,
+    var address:List<Address>,
 ){
 
     fun rename(newName: String) {
@@ -28,9 +28,9 @@ class Goods(
 
     fun changeAddress(newAddress: String) {
         this.nowAddress1 = newAddress
-        address.detail = "haha"
-        if (address is BeijingAddress){
-            (address as BeijingAddress).beijingAddressCode = "change1"
+        address[0].detail = "haha"
+        if (address[0] is BeijingAddress){
+            (address[0] as BeijingAddress).beijingAddressCode = "change1"
         }
     }
 }
