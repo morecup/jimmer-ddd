@@ -7,6 +7,6 @@ class GoodsFactory(
     private val goodsRepository: GoodsRepository
 ) {
     fun create(cmd: CreateGoodsCmd): Goods {
-        return Goods(cmd.name, cmd.nowAddress)
+        return Goods(cmd.name, cmd.nowAddress,null, listOf())
     }
 }

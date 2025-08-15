@@ -3,10 +3,12 @@ package org.morecup.jimmerddd.betterddd.core.proxy
 import org.aspectj.lang.ProceedingJoinPoint
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmField
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
+import org.morecup.jimmerddd.betterddd.core.bridge.IConstructorBridge
 import org.morecup.jimmerddd.betterddd.core.bridge.IFieldBridge
 import org.morecup.jimmerddd.betterddd.core.util.ConcurrentWeakHashMap
 import java.lang.reflect.Field
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 
 //val aggregateRootCache = ConcurrentHashMap<Any, List<Any>>()
 var aggregateRootCache = ConcurrentWeakHashMap<Any, List<Any>>()
@@ -18,6 +20,19 @@ class DomainAggregateRoot {
             val aggregateRoot = clazz.newInstance() as T
             aggregateRootCache.put(aggregateRoot as Any, args.toList())
             return aggregateRoot
+        }
+
+        fun <T : Any> build(clazz: KClass<T>, vararg args: Any): T {
+            //实例化T
+            val aggregateRoot = clazz.java.newInstance() as T
+            aggregateRootCache.put(aggregateRoot as Any, args.toList())
+            return aggregateRoot
+        }
+
+        fun <T : Any> bind(instance: T, vararg args: Any): T {
+            //实例化T
+            aggregateRootCache.put(instance as Any, args.toList())
+            return instance
         }
 
         fun findOrmObjs(aggregateRoot: Any): List<Any>{
@@ -89,4 +104,13 @@ class DomainAggregateRootField: IFieldBridge {
         OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldStr.split("."), value)
     }
 
+}
+
+class DomainAggregateRootConstructor: IConstructorBridge {
+    override fun createInstance(pjp: ProceedingJoinPoint, args: Array<Any?>) {
+        println("createInstance: ${pjp.signature}, args: ${args.contentToString()}")
+        val aggregateRootClass = pjp.signature.declaringType
+        val ormEntityClasses = aggregateRootToOrmEntityClassCache.get(aggregateRootClass)?:throw IllegalStateException("aggregateRootToOrmEntityClassCache not found")
+        OrmEntityConstructorConfig.constructor.createInstance(ormEntityClasses,pjp.`this`)
+    }
 }

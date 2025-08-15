@@ -9,5 +9,5 @@ class HubeiAddress(
     override var detail: String,
     @OrmField("localAddress.hubeiAddressCode")
     var hubeiAddressCode: String
-) : Address {
+) : Address(name, detail) {
 }

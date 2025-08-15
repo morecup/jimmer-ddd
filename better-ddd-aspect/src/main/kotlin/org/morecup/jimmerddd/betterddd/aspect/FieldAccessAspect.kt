@@ -10,10 +10,10 @@ import org.morecup.jimmerddd.betterddd.core.bridge.FieldBridgeConfig
 @Aspect
 class FieldAccessAspect {
 
-    @Pointcut("get(* *) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.FieldAccessAspect)")
+    @Pointcut("get(!static * *) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.FieldAccessAspect)")
     fun anyFieldGet() {}
 
-    @Pointcut("set(* *) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.FieldAccessAspect)")
+    @Pointcut("set(!static * *) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) && !within(org.morecup.jimmerddd.betterddd.aspect.FieldAccessAspect)")
     fun anyFieldSet() {}
 
     @Around("anyFieldGet()")

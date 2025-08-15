@@ -43,9 +43,9 @@ kotlin {
 
 
 allOpen {
-    annotation("org.morecup.jimmerddd.betterddd.annotation.AggregateRoot")
+    annotation("org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot")
 }
 
 noArg {
-    annotation("org.morecup.jimmerddd.betterddd.annotation.AggregateRoot")
+    annotation("org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot")
 }

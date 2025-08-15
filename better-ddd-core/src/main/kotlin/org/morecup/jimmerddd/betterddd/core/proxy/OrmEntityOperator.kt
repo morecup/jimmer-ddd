@@ -1,5 +1,7 @@
 package org.morecup.jimmerddd.betterddd.core.proxy
 
+import kotlin.reflect.KClass
+
 
 object OrmEntityOperatorConfig {
     var operator: IOrmEntityOperator = DefaultOrmEntityOperator()
@@ -20,4 +22,17 @@ class DefaultOrmEntityOperator: IOrmEntityOperator {
         println("entity:$entity, fieldPathStr:$fieldList,value:$value")
     }
 
+}
+
+object OrmEntityConstructorConfig {
+    var constructor: IOrmEntityConstructor = DefaultOrmEntityConstructor()
+}
+
+interface IOrmEntityConstructor {
+    fun createInstance(ormEntityClassList: List<Class<*>>,domainAggregateInstance:Any)
+}
+class DefaultOrmEntityConstructor: IOrmEntityConstructor {
+    override fun createInstance(ormEntityClassList: List<Class<*>>,domainAggregateInstance:Any) {
+        println("createInstance: ormEntityClassList:$ormEntityClassList,domainAggregateInstance:$domainAggregateInstance")
+    }
 }

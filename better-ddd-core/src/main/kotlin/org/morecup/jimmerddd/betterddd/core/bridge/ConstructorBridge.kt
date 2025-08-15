@@ -1,9 +1,10 @@
 package org.morecup.jimmerddd.betterddd.core.bridge
 
 import org.aspectj.lang.ProceedingJoinPoint
+import org.morecup.jimmerddd.betterddd.core.proxy.DomainAggregateRootConstructor
 
 object ConstructorBridgeConfig {
-    var constructorBridge: IConstructorBridge = DefaultConstructorBridge()
+    var constructorBridge: IConstructorBridge = DomainAggregateRootConstructor()
 }
 
 class DefaultConstructorBridge: IConstructorBridge {

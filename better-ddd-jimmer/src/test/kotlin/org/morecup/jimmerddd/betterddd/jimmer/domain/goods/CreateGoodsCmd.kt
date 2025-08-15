@@ -12,9 +12,8 @@ class CreateGoodsCmdHandle(
     private val goodsRepository: GoodsRepository,
     private val goodsFactory: GoodsFactory,
 ) {
-    fun handle(command: CreateGoodsCmd): Long {
+    fun handle(command: CreateGoodsCmd) {
         val goods = goodsFactory.create(command)
         val updatedGoods = goodsRepository.saveGoods(goods)
-        return updatedGoods.id!!
     }
 }

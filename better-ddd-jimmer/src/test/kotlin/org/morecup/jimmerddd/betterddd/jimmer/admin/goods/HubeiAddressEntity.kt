@@ -8,7 +8,7 @@ import org.morecup.jimmerddd.betterddd.jimmer.admin.BaseEntity
 @Entity
 @Table(name = "hubei_address")
 interface HubeiAddressEntity:BaseEntity {
-    var hubeiAddressCode: String
+    val hubeiAddressCode: String
 
     @OneToOne
     val addressEntity:AddressEntity
