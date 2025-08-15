@@ -7,6 +7,7 @@ import org.babyfish.jimmer.runtime.DraftSpi
 import org.babyfish.jimmer.sql.ast.mutation.AssociatedSaveMode
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.KSqlClient
+import org.babyfish.jimmer.sql.kt.fetcher.newFetcher
 import org.morecup.jimmerddd.betterddd.core.preanalysis.analysisMethodsCalledFields
 import org.morecup.jimmerddd.betterddd.core.proxy.DomainAggregateRoot
 import org.morecup.jimmerddd.betterddd.jimmer.domain.goods.Goods
@@ -56,7 +57,12 @@ open class GoodsRepositoryImpl(
                 //  FieldInfo -> fetcher
             }
         }
-        val goodsEntity: GoodsEntity = kSqlClient.findById(GoodsEntity::class, id) ?: throw RuntimeException("Goods not found")
+        val goodsEntity: GoodsEntity = kSqlClient.findById(newFetcher(GoodsEntity::class).by {
+            allTableFields()
+            addressEntity {
+                allTableFields()
+            }
+        }, id) ?: throw RuntimeException("Goods not found")
 //        goods-> proxy-> domain goods
         val tempDraft = DraftContext(null).toDraftObject<Any>(goodsEntity).let { it as DraftSpi }
         val goods: Goods = DomainAggregateRoot.build(Goods::class.java, tempDraft)

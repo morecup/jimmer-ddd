@@ -2,8 +2,10 @@ package org.morecup.jimmerddd.betterddd.jimmer.domain.goods
 
 import org.morecup.jimmerddd.betterddd.core.annotation.DomainEntity
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmField
+import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
 
-@DomainEntity(["address","localAddress"])
+@DomainEntity
+@OrmObject(["address","localAddress"])
 class HubeiAddress(
     override var name: String,
     override var detail: String,
