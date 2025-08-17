@@ -1,11 +1,10 @@
 package org.morecup.jimmerddd.betterddd.jimmer.domain.goods
 
 import org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot
-import org.morecup.jimmerddd.betterddd.core.annotation.ColumnChoiceRule
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmField
-import org.morecup.jimmerddd.betterddd.core.annotation.OrmFields
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
-import kotlin.reflect.full.primaryConstructor
+import org.morecup.jimmerddd.betterddd.core.annotation.PolyListOrmField
+import org.morecup.jimmerddd.betterddd.core.annotation.PolyListOrmFields
 
 @AggregateRoot
 @OrmObject(["goods"])
@@ -14,13 +13,16 @@ class Goods(
     @field:OrmField("goods:nowAddress")
     var nowAddress1: String,
     var id: Long?=null,
-    @field:OrmFields(
-        [
-            OrmField(columnName = "goods:addressEntity", columnType = Address::class),
-            OrmField(columnChoiceNames = ["goods:addressEntity.beijingAddress","goods:addressEntity.hubeiAddress"],
+    @field:PolyListOrmFields(
+        columnNames = [
+            PolyListOrmField(columnName = "base:"),
+            PolyListOrmField(columnChoiceNames = ["base:beijingAddress","base:hubeiAddress"],
                 columnChoiceTypes = [BeijingAddress::class,HubeiAddress::class],
-                columnChoiceRule = ColumnChoiceRule.auto),
-        ]
+            )
+        ],
+        baseListName = "goods:addressEntity",
+        baseColumnChoiceNames = ["base:beijingAddress","base:hubeiAddress"],
+        baseColumnChoiceTypes = [BeijingAddress::class,HubeiAddress::class],
     )
     var address:List<Address>,
 ){
@@ -32,7 +34,8 @@ class Goods(
     fun changeAddress(newAddress: String) {
         this.nowAddress1 = newAddress
         println(nowAddress1)
-//        println(address.size)
+        println(address.size)
+        address = address - HubeiAddress("hubeiAddress","2342","234324")
         println(name)
 //        address[0].detail = "haha"
 //        if (address[0] is BeijingAddress){
