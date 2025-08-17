@@ -17,16 +17,15 @@ annotation class OrmFields(
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 annotation class ListOrmFields(
-    val columnNames: Array<ListOrmField> = [],
+    val columnNames: Array<String> = [],
     val baseListName: String = "",
 )
 
-@Retention(AnnotationRetention.RUNTIME)
-//@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
-annotation class ListOrmField(
-    val columnName: String = "",
-    val baseColumnName: String = "",
-)
+//@Retention(AnnotationRetention.RUNTIME)
+////@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+//annotation class ListOrmField(
+//    val columnName: String = "",
+//)
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
