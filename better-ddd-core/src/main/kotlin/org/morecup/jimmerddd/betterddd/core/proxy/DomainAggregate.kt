@@ -177,11 +177,40 @@ class DomainAggregateRootField: IFieldBridge {
         obj: Any,
         value: Any?
     ) {
+        // 增加缓存
+        // 处理非基础类型情况
         val objects = aggregateRootCache.get(obj)?:throw IllegalStateException("aggregateRootCache not found")
-        val fieldFullName = field.getAnnotation(OrmField::class.java)?.columnName?:field.name
         val objectNames = field.declaringClass.getAnnotation(OrmObject::class.java)?.objectNameList?:arrayOf()
-        val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
-        OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldList, value)
+        val ormField: OrmField? = field.getAnnotation(OrmField::class.java)
+        val ormFields: OrmFields? = field.getAnnotation(OrmFields::class.java)
+        val listOrmFields: ListOrmFields? = field.getAnnotation(ListOrmFields::class.java)
+        val polyOrmFields: PolyOrmFields? = field.getAnnotation(PolyOrmFields::class.java)
+        val polyListOrmFields: PolyListOrmFields? = field.getAnnotation(PolyListOrmFields::class.java)
+
+        when {
+            ormField != null -> {
+                val fieldFullName = ormField.columnName
+                val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
+                OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldList, value)
+            }
+            ormFields != null -> {
+                throw UnsupportedOperationException("不支持对 @OrmFields 注解的字段进行设值操作")
+            }
+            listOrmFields != null -> {
+                throw UnsupportedOperationException("不支持对 @ListOrmFields 注解的字段进行设值操作")
+            }
+            polyOrmFields != null -> {
+                throw UnsupportedOperationException("不支持对 @PolyOrmFields 注解的字段进行设值操作")
+            }
+            polyListOrmFields != null -> {
+                throw UnsupportedOperationException("不支持对 @PolyListOrmFields 注解的字段进行设值操作")
+            }
+            else -> {
+                val fieldFullName = field.name
+                val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
+                OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldList, value)
+            }
+        }
     }
 
     private fun isBasicOrmType(clazz: Class<*>): Boolean {
