@@ -270,6 +270,7 @@ class DomainAggregateRootConstructor: IConstructorBridge {
         println("createInstance: ${pjp.signature}, args: ${args.contentToString()}")
         val aggregateRootClass = pjp.signature.declaringType
         val ormEntityClasses = aggregateRootToOrmEntityClassCache.get(aggregateRootClass)?:throw IllegalStateException("aggregateRootToOrmEntityClassCache not found")
-        OrmEntityConstructorConfig.constructor.createInstance(ormEntityClasses,pjp.`this`)
+        val ormEntityList = OrmEntityConstructorConfig.constructor.createInstanceList(ormEntityClasses)
+        DomainAggregateRoot.bind(pjp.`this`,*ormEntityList.toTypedArray())
     }
 }

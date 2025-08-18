@@ -10,6 +10,8 @@ object OrmEntityOperatorConfig {
 interface IOrmEntityOperator {
     fun getEntityField(entity:Any,fieldList:List<String>):Any?
     fun setEntityField(entity:Any,fieldList:List<String>,value:Any?)
+    fun addElementToEntityList(entity: Any, fieldList: List<String>, element: Any)
+    fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any)
 }
 
 class DefaultOrmEntityOperator: IOrmEntityOperator {
@@ -22,6 +24,13 @@ class DefaultOrmEntityOperator: IOrmEntityOperator {
         println("entity:$entity, fieldPathStr:$fieldList,value:$value")
     }
 
+    override fun addElementToEntityList(entity: Any, fieldList: List<String>, element: Any) {
+        println("向实体添加关联元素: entity=$entity, fieldPath=$fieldList, element=$element")
+    }
+
+    override fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any) {
+        println("从实体移除关联元素: entity=$entity, fieldPath=$fieldList, element=$element")
+    }
 }
 
 object OrmEntityConstructorConfig {
@@ -29,10 +38,11 @@ object OrmEntityConstructorConfig {
 }
 
 interface IOrmEntityConstructor {
-    fun createInstance(ormEntityClassList: List<Class<*>>,domainAggregateInstance:Any)
+    fun createInstanceList(ormEntityClassList: List<Class<*>>):List<Any>
 }
 class DefaultOrmEntityConstructor: IOrmEntityConstructor {
-    override fun createInstance(ormEntityClassList: List<Class<*>>,domainAggregateInstance:Any) {
-        println("createInstance: ormEntityClassList:$ormEntityClassList,domainAggregateInstance:$domainAggregateInstance")
+    override fun createInstanceList(ormEntityClassList: List<Class<*>>):List<Any> {
+        println("createInstance: ormEntityClassList:$ormEntityClassList")
+        return emptyList()
     }
 }
