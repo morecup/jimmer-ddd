@@ -16,6 +16,19 @@ annotation class OrmFields(
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+annotation class ListOrmFields(
+    val columnNames: Array<String> = [],
+    val baseListName: String = "",
+)
+
+//@Retention(AnnotationRetention.RUNTIME)
+////@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+//annotation class ListOrmField(
+//    val columnName: String = "",
+//)
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 annotation class PolyOrmFields(
     val columnNames: Array<PolyOrmField> = [],
     //采用哪种子类的规则
@@ -25,7 +38,7 @@ annotation class PolyOrmFields(
 )
 
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+//@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 annotation class PolyOrmField(
     // ormObject不参与多态的情况
     val columnName: String = "",
@@ -45,7 +58,7 @@ annotation class PolyListOrmFields(
 )
 
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+//@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 annotation class PolyListOrmField(
     val columnName: String = "",
 

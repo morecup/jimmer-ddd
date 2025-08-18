@@ -46,3 +46,6 @@ bin/
 .DS_Store
 
 *.bkp
+
+# 或者精确路径（推荐）
+/gradle.properties

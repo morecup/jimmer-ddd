@@ -1,6 +1,7 @@
 package org.morecup.jimmerddd.betterddd.core.proxy
 
 import org.aspectj.lang.ProceedingJoinPoint
+import org.morecup.jimmerddd.betterddd.core.annotation.ListOrmFields
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmField
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmFields
 import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
@@ -51,17 +52,30 @@ class DomainAggregateRootField: IFieldBridge {
         field: Field,
         obj: Any
     ): Any? {
+        // 增加缓存
+        // 处理非基础类型情况
         val objects = aggregateRootCache.get(obj)?:throw IllegalStateException("aggregateRootCache not found")
         val objectNames = field.declaringClass.getAnnotation(OrmObject::class.java)?.objectNameList?:arrayOf()
         val ormField: OrmField? = field.getAnnotation(OrmField::class.java)
         val ormFields: OrmFields? = field.getAnnotation(OrmFields::class.java)
+        val listOrmFields: ListOrmFields? = field.getAnnotation(ListOrmFields::class.java)
         val polyOrmFields: PolyOrmFields? = field.getAnnotation(PolyOrmFields::class.java)
         val polyListOrmFields: PolyListOrmFields? = field.getAnnotation(PolyListOrmFields::class.java)
         return when {
             ormField != null -> {
                 val fieldFullName = ormField.columnName
                 val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
-                OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
+                val fieldValue = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
+                // field.type判断是否是基础orm类型，而不是自定义类型
+                if (isBasicOrmType(field.type)) {
+                    fieldValue
+                } else {
+                    if (fieldValue == null) {
+                        null
+                    } else {
+                        DomainAggregateRoot.build(field.type, fieldValue)
+                    }
+                }
             }
             ormFields != null -> {
                 val ormObjects = ormFields.columnNames.map {
@@ -73,6 +87,32 @@ class DomainAggregateRootField: IFieldBridge {
                     ormObject
                 }
                 DomainAggregateRoot.build(field.type, *ormObjects.toTypedArray())
+            }
+            listOrmFields!= null -> {
+                val (entityValue, entityFieldList) = resolveEntityAndField(listOrmFields.baseListName, objectNames, objects)
+                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList) as List<*>
+                baseListOrmEntity.map { baseOrmEntity ->
+                    if (baseOrmEntity == null) {
+                        throw RuntimeException("映射出来的是null,$field")
+                    }
+                    val ormObjects = listOrmFields.columnNames.map {
+                        if (it.contains("base:")) {
+                            val ormObject = OrmEntityOperatorConfig.operator.getEntityField(baseOrmEntity, it.replace("base:", "").split("."))
+                            if (ormObject == null) {
+                                throw RuntimeException("映射出来的是null,$field")
+                            }
+                            ormObject
+                        } else {
+                            val (entityValue, entityFieldList) = resolveEntityAndField(it, objectNames, objects)
+                            val ormObject = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
+                            if (ormObject == null) {
+                                throw RuntimeException("映射出来的是null,$field")
+                            }
+                            ormObject
+                        }
+                    }
+                    DomainAggregateRoot.build(field.type, *ormObjects.toTypedArray())
+                }
             }
             polyOrmFields != null -> {
                 val choiceOrmObjs = polyOrmFields.columnChoiceNames.map {
@@ -142,6 +182,32 @@ class DomainAggregateRootField: IFieldBridge {
         val objectNames = field.declaringClass.getAnnotation(OrmObject::class.java)?.objectNameList?:arrayOf()
         val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
         OrmEntityOperatorConfig.operator.setEntityField(entityValue, entityFieldList, value)
+    }
+
+    private fun isBasicOrmType(clazz: Class<*>): Boolean {
+        return clazz.isPrimitive ||
+                clazz == String::class.java ||
+                clazz == java.lang.Boolean::class.java ||
+                clazz == java.lang.Character::class.java ||
+                clazz == java.lang.Byte::class.java ||
+                clazz == java.lang.Short::class.java ||
+                clazz == java.lang.Integer::class.java ||
+                clazz == java.lang.Long::class.java ||
+                clazz == java.lang.Float::class.java ||
+                clazz == java.lang.Double::class.java ||
+                clazz == java.math.BigDecimal::class.java ||
+                clazz == java.math.BigInteger::class.java ||
+                clazz == java.util.Date::class.java ||
+                clazz == java.sql.Date::class.java ||
+                clazz == java.sql.Timestamp::class.java ||
+                clazz == java.time.LocalDate::class.java ||
+                clazz == java.time.LocalDateTime::class.java ||
+                clazz == java.time.LocalTime::class.java ||
+                clazz == java.time.Instant::class.java ||
+                clazz == java.time.ZonedDateTime::class.java ||
+                clazz == java.time.OffsetDateTime::class.java ||
+                clazz == java.time.OffsetTime::class.java ||
+                clazz.isEnum
     }
 
     private fun resolveEntityAndField(fieldFullName: String, objectNames: Array<String>, objects: List<Any>): EntityAndField {
