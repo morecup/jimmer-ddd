@@ -39,6 +39,16 @@ class JimmerEntityOperator: IOrmEntityOperator {
         listDraft.add(element)
     }
 
+    override fun addElementToEntityListAt(
+        entity: Any,
+        fieldList: List<String>,
+        index: Int,
+        element: Any
+    ) {
+        val listDraft = getEntityField(entity,fieldList) as ListDraft<Any>
+        listDraft.add(index,element)
+    }
+
     override fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any) {
         val listDraft = getEntityField(entity,fieldList) as ListDraft<Any>
         listDraft.remove(element)

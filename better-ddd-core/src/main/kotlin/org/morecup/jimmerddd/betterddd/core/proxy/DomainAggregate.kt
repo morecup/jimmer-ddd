@@ -342,33 +342,44 @@ class TrackedAssociationList<T>(
         return TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, domainEntityList.subList(fromIndex, toIndex), ormBaseList.subList(fromIndex, toIndex),customNames)
     }
 
+    // 提取公共逻辑到私有方法
+    private fun addElementToBackend(element: T): Any? {
+        if (element == null) return null
+        
+        val ormObjs = DomainAggregateRoot.findOrmObjs(element)
+        // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
+        val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
+        val baseOrmObj = if (emptyNameIndex != -1) {
+            ormObjs[emptyNameIndex]
+        } else {
+            // 创建一个新的ORM对象
+            // 这里假设使用第一个ORM对象的类型来创建新实例
+            // 实际实现可能需要根据具体业务需求调整
+            val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
+            // 获取list内实际的泛型
+            val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
+            val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
+            // 创建一个新的ORM对象
+            OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
+        }
+
+        ormBaseList.add(baseOrmObj)
+        
+        withIndexCustomNames.forEach {
+            if (it.value.isNotBlank()){
+                OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
+            }
+        }
+        
+        return baseOrmObj
+    }
+
     override fun add(element: T): Boolean {
         val result = domainEntityList.add(element)
         if (result && element != null) {
-            val ormObjs = DomainAggregateRoot.findOrmObjs(element)
-            // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
-            val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
-            val baseOrmObj = if (emptyNameIndex != -1) {
-                ormObjs[emptyNameIndex]
-            } else {
-                // 创建一个新的ORM对象
-                // 这里假设使用第一个ORM对象的类型来创建新实例
-                // 实际实现可能需要根据具体业务需求调整
-                val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
-                // 获取list内实际的泛型
-                val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
-                val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
-                // 创建一个新的ORM对象
-                OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
-            }
-
-            ormBaseList.add(baseOrmObj)
-            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
-
-            withIndexCustomNames.forEach {
-                if (it.value.isNotBlank()){
-                    OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
-                }
+            val baseOrmObj = addElementToBackend(element)
+            if (baseOrmObj != null) {
+                OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
             }
         }
         return result
@@ -377,35 +388,30 @@ class TrackedAssociationList<T>(
     override fun add(index: Int, element: T) {
         domainEntityList.add(index, element)
         if (element != null) {
-            // 通知ORM层添加关联关系
-            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+            val baseOrmObj = addElementToBackend(element)
+            if (baseOrmObj != null) {
+                OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+            }
         }
     }
 
     override fun addAll(elements: Collection<T>): Boolean {
-        val result = domainEntityList.addAll(elements)
-        if (result) {
-            // 通知ORM层批量添加关联关系
-            for (element in elements) {
-                if (element != null) {
-                    OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
-                }
+        var result = false
+        for (element in elements) {
+            if (add(element)) {
+                result = true
             }
         }
         return result
     }
 
     override fun addAll(index: Int, elements: Collection<T>): Boolean {
-        val result = domainEntityList.addAll(index, elements)
-        if (result) {
-            // 通知ORM层批量添加关联关系
-            for (element in elements) {
-                if (element != null) {
-                    OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
-                }
-            }
+        var currentIndex = index
+        for (element in elements) {
+            add(currentIndex, element)
+            currentIndex++
         }
-        return result
+        return elements.isNotEmpty()
     }
 
     override fun remove(element: T): Boolean {
@@ -469,7 +475,10 @@ class TrackedAssociationList<T>(
         }
         // 通知ORM层新元素被添加
         if (element != null) {
-            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+            val baseOrmObj = addElementToBackend(element)
+            if (baseOrmObj != null) {
+                OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+            }
         }
         return oldElement
     }

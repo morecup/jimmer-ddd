@@ -11,6 +11,7 @@ interface IOrmEntityOperator {
     fun getEntityField(entity:Any,fieldList:List<String>):Any?
     fun setEntityField(entity:Any,fieldList:List<String>,value:Any?)
     fun addElementToEntityList(entity: Any, fieldList: List<String>, element: Any)
+    fun addElementToEntityListAt(entity: Any, fieldList: List<String>, index: Int, element: Any)
     fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any)
 }
 
@@ -26,6 +27,10 @@ class DefaultOrmEntityOperator: IOrmEntityOperator {
 
     override fun addElementToEntityList(entity: Any, fieldList: List<String>, element: Any) {
         println("向实体添加关联元素: entity=$entity, fieldPath=$fieldList, element=$element")
+    }
+
+    override fun addElementToEntityListAt(entity: Any, fieldList: List<String>, index: Int, element: Any) {
+        println("向实体添加关联元素: entity=$entity, fieldPath=$fieldList, index=$index, element=$element")
     }
 
     override fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any) {
