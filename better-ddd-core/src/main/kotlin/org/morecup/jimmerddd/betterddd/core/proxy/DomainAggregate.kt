@@ -46,6 +46,9 @@ class DomainAggregateRoot {
 }
 val pattern = """^a(\d+)$""".toRegex()  // 正则匹配 a+数字 模式
 
+// 添加字段值缓存
+val fieldValueCache = ConcurrentWeakHashMap<Pair<Any, Field>, Any?>()
+
 class DomainAggregateRootField: IFieldBridge {
     override fun getFieldValue(
         pjp: ProceedingJoinPoint,
@@ -53,6 +56,11 @@ class DomainAggregateRootField: IFieldBridge {
         obj: Any
     ): Any? {
         // 增加缓存
+        // 先从缓存中获取
+        val cacheKey = Pair(obj, field)
+        if (fieldValueCache.get(cacheKey) != null) {
+            return fieldValueCache.get(cacheKey)
+        }
         // 处理非基础类型情况
         val objects = aggregateRootCache.get(obj)?:throw IllegalStateException("aggregateRootCache not found")
         val objectNames = field.declaringClass.getAnnotation(OrmObject::class.java)?.objectNameList?:arrayOf()
@@ -61,7 +69,7 @@ class DomainAggregateRootField: IFieldBridge {
         val listOrmFields: ListOrmFields? = field.getAnnotation(ListOrmFields::class.java)
         val polyOrmFields: PolyOrmFields? = field.getAnnotation(PolyOrmFields::class.java)
         val polyListOrmFields: PolyListOrmFields? = field.getAnnotation(PolyListOrmFields::class.java)
-        return when {
+        val result = when {
             ormField != null -> {
                 val fieldFullName = ormField.columnName
                 val (entityValue, entityFieldList) = resolveEntityAndField(fieldFullName, objectNames, objects)
@@ -169,6 +177,11 @@ class DomainAggregateRootField: IFieldBridge {
                 OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
             }
         }
+        // 将结果存入缓存（仅对非基础类型和List类型）
+        if (!isBasicOrmType(field.type) || field.type == List::class.java) {
+            fieldValueCache.put(cacheKey, result)
+        }
+        return result
     }
 
     override fun setFieldValue(
