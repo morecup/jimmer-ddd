@@ -174,7 +174,17 @@ class DomainAggregateRootField: IFieldBridge {
             }
             else -> {
                 val (entityValue, entityFieldList) = resolveEntityAndField(field.name, objectNames, objects)
-                OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
+                val fieldValue = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList)
+                // field.type判断是否是基础orm类型，而不是自定义类型
+                if (isBasicOrmType(field.type)) {
+                    fieldValue
+                } else {
+                    if (fieldValue == null) {
+                        null
+                    } else {
+                        DomainAggregateRoot.build(field.type, fieldValue)
+                    }
+                }
             }
         }
         // 将结果存入缓存（仅对非基础类型和List类型）
