@@ -12,6 +12,10 @@ import kotlin.reflect.KClass
 
 class JimmerEntityOperator: IOrmEntityOperator {
     override fun getEntityField(entity: Any, fieldList: List<String>): Any? {
+        // 如果fieldList是空的，直接返回entity
+        if (fieldList.isEmpty()){
+            return entity
+        }
         var draft = entity as DraftSpi
         fieldList.dropLast(1).forEach {
             draft = draft.__get(it) as DraftSpi
@@ -31,22 +35,12 @@ class JimmerEntityOperator: IOrmEntityOperator {
     }
 
     override fun addElementToEntityList(entity: Any, fieldList: List<String>, element: Any) {
-        var draft = entity as DraftSpi
-        fieldList.dropLast(1).forEach { fieldName ->
-            draft = draft.__get(fieldName) as DraftSpi
-        }
-
-        val listDraft = draft.__get(fieldList.last()) as ListDraft<Any>
+        val listDraft = getEntityField(entity,fieldList) as ListDraft<Any>
         listDraft.add(element)
     }
 
     override fun removeElementFromEntityList(entity: Any, fieldList: List<String>, element: Any) {
-        var draft = entity as DraftSpi
-        fieldList.dropLast(1).forEach { fieldName ->
-            draft = draft.__get(fieldName) as DraftSpi
-        }
-
-        val listDraft = draft.__get(fieldList.last()) as ListDraft<*>
+        val listDraft = getEntityField(entity,fieldList) as ListDraft<Any>
         listDraft.remove(element)
     }
 }
@@ -58,5 +52,10 @@ class JimmerEntityConstructor: IOrmEntityConstructor {
             type.draftFactory.apply(DraftContext(null), null)
         }
         return jimmerDraftList
+    }
+
+    override fun createInstance(ormEntityClass: Class<*>): Any {
+        val type = ImmutableType.get(ormEntityClass)
+        return type.draftFactory.apply(DraftContext(null), null)
     }
 }

@@ -11,6 +11,7 @@ import org.morecup.jimmerddd.betterddd.core.bridge.IConstructorBridge
 import org.morecup.jimmerddd.betterddd.core.bridge.IFieldBridge
 import org.morecup.jimmerddd.betterddd.core.util.ConcurrentWeakHashMap
 import java.lang.reflect.Field
+import java.lang.reflect.ParameterizedType
 import kotlin.jvm.java
 import kotlin.reflect.KClass
 
@@ -98,8 +99,8 @@ class DomainAggregateRootField: IFieldBridge {
             }
             listOrmFields!= null -> {
                 val (entityValue, entityFieldList) = resolveEntityAndField(listOrmFields.baseListName, objectNames, objects)
-                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList) as List<*>
-                baseListOrmEntity.map { baseOrmEntity ->
+                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList) as List<Any>
+                val mappedList = baseListOrmEntity.map { baseOrmEntity ->
                     if (baseOrmEntity == null) {
                         throw RuntimeException("映射出来的是null,$field")
                     }
@@ -121,6 +122,8 @@ class DomainAggregateRootField: IFieldBridge {
                     }
                     DomainAggregateRoot.build(field.type, *ormObjects.toTypedArray())
                 }
+                // 使用可追踪的List实现，以便在添加/删除元素时通知ORM层
+                TrackedAssociationList(entityValue, entityFieldList, mappedList,baseListOrmEntity,listOrmFields.columnNames)
             }
             polyOrmFields != null -> {
                 val choiceOrmObjs = polyOrmFields.columnChoiceNames.map {
@@ -295,5 +298,191 @@ class DomainAggregateRootConstructor: IConstructorBridge {
         val ormEntityClasses = aggregateRootToOrmEntityClassCache.get(aggregateRootClass)?:throw IllegalStateException("aggregateRootToOrmEntityClassCache not found")
         val ormEntityList = OrmEntityConstructorConfig.constructor.createInstanceList(ormEntityClasses)
         DomainAggregateRoot.bind(pjp.`this`,*ormEntityList.toTypedArray())
+    }
+}
+
+class TrackedAssociationList<T>(
+    private val baseListOrmObj: Any,
+    private val baseListOrmFieldList: List<String>,
+    initialList: List<T>,
+    baseList: List<Any>,
+    val customNames: Array<String>
+) : MutableList<T> {
+
+    private val domainEntityList = ArrayList<T>(initialList)
+
+    private val ormBaseList = ArrayList<Any>(baseList)
+
+    //将customNames过滤掉不含有base:的，并且保留原来的索引，并且按照名称的长度，从小到大排列
+    private val withIndexCustomNames = customNames.withIndex()
+        .filter { it.value.contains("base:") }
+        .sortedBy { it.value.length }
+        .map { IndexedValue(it.index, it.value.substringAfter("base:")) }
+
+    override val size: Int
+        get() = domainEntityList.size
+
+    override fun isEmpty(): Boolean = domainEntityList.isEmpty()
+
+    override fun contains(element: T): Boolean = domainEntityList.contains(element)
+
+    override fun iterator(): MutableIterator<T> = domainEntityList.iterator()
+
+    override fun listIterator(): MutableListIterator<T> = domainEntityList.listIterator()
+
+    override fun listIterator(index: Int): MutableListIterator<T> = domainEntityList.listIterator(index)
+
+    override fun get(index: Int): T = domainEntityList[index]
+
+    override fun indexOf(element: T): Int = domainEntityList.indexOf(element)
+
+    override fun lastIndexOf(element: T): Int = domainEntityList.lastIndexOf(element)
+
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
+        return TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, domainEntityList.subList(fromIndex, toIndex), ormBaseList.subList(fromIndex, toIndex),customNames)
+    }
+
+    override fun add(element: T): Boolean {
+        val result = domainEntityList.add(element)
+        if (result && element != null) {
+            val ormObjs = DomainAggregateRoot.findOrmObjs(element)
+            // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
+            val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
+            val baseOrmObj = if (emptyNameIndex != -1) {
+                ormObjs[emptyNameIndex]
+            } else {
+                // 创建一个新的ORM对象
+                // 这里假设使用第一个ORM对象的类型来创建新实例
+                // 实际实现可能需要根据具体业务需求调整
+                val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
+                // 获取list内实际的泛型
+                val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
+                val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
+                // 创建一个新的ORM对象
+                OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
+            }
+
+            ormBaseList.add(baseOrmObj)
+            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
+
+            withIndexCustomNames.forEach {
+                if (it.value.isNotBlank()){
+                    OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
+                }
+            }
+        }
+        return result
+    }
+
+    override fun add(index: Int, element: T) {
+        domainEntityList.add(index, element)
+        if (element != null) {
+            // 通知ORM层添加关联关系
+            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+        }
+    }
+
+    override fun addAll(elements: Collection<T>): Boolean {
+        val result = domainEntityList.addAll(elements)
+        if (result) {
+            // 通知ORM层批量添加关联关系
+            for (element in elements) {
+                if (element != null) {
+                    OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+                }
+            }
+        }
+        return result
+    }
+
+    override fun addAll(index: Int, elements: Collection<T>): Boolean {
+        val result = domainEntityList.addAll(index, elements)
+        if (result) {
+            // 通知ORM层批量添加关联关系
+            for (element in elements) {
+                if (element != null) {
+                    OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+                }
+            }
+        }
+        return result
+    }
+
+    override fun remove(element: T): Boolean {
+        val index = indexOf(element)
+        if (index >= 0) {
+            removeAt(index)
+            return true
+        }
+        return false
+    }
+
+    override fun removeAt(index: Int): T {
+        val element = domainEntityList.removeAt(index)
+        if (element != null) {
+            // 通知ORM层移除关联关系
+            OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+        }
+        return element
+    }
+
+    override fun removeAll(elements: Collection<T>): Boolean {
+        var modified = false
+        for (element in elements) {
+            if (remove(element)) {
+                modified = true
+            }
+        }
+        return modified
+    }
+
+    override fun clear() {
+        val elementsToRemove = ArrayList(domainEntityList)
+        domainEntityList.clear()
+        // 通知ORM层批量移除关联关系
+        for (element in elementsToRemove) {
+            if (element != null) {
+                OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+            }
+        }
+    }
+
+    override fun retainAll(elements: Collection<T>): Boolean {
+        val elementsToRemove = domainEntityList.filter { it !in elements }
+        val result = domainEntityList.retainAll(elements)
+        if (result) {
+            // 通知ORM层移除不在保留列表中的元素
+            for (element in elementsToRemove) {
+                if (element != null) {
+                    OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+                }
+            }
+        }
+        return result
+    }
+
+    override fun set(index: Int, element: T): T {
+        val oldElement = domainEntityList.set(index, element)
+        // 通知ORM层旧元素被替换
+        if (oldElement != null) {
+            OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(oldElement))
+        }
+        // 通知ORM层新元素被添加
+        if (element != null) {
+            OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, convertToBaseListItem(element))
+        }
+        return oldElement
+    }
+
+    override fun containsAll(elements: Collection<T>): Boolean = domainEntityList.containsAll(elements)
+
+    override fun equals(other: Any?): Boolean = domainEntityList == other
+
+    override fun hashCode(): Int = domainEntityList.hashCode()
+
+    override fun toString(): String = domainEntityList.toString()
+
+    private fun convertToBaseListItem(domainObject: T): Any {
+        return ormBaseList[domainEntityList.indexOf(domainObject)]
     }
 }

@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.8 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.8">
   <diagram name="第 1 页" id="XTwKxFAp_2Ht2jpDPjbG">
-    <mxGraphModel dx="4492" dy="635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
+    <mxGraphModel dx="4434" dy="635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -350,6 +350,12 @@
         <mxCell id="OivCTFusflsnZYE-OFXO-42" value="domain get" style="whiteSpace=wrap;html=1;" vertex="1" parent="OivCTFusflsnZYE-OFXO-19">
           <mxGeometry x="12.5" y="80" width="95" height="40" as="geometry" />
         </mxCell>
+        <mxCell id="OivCTFusflsnZYE-OFXO-49" value="baseListOrmObject" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="OivCTFusflsnZYE-OFXO-19">
+          <mxGeometry x="465" y="95" width="125" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="OivCTFusflsnZYE-OFXO-51" value="baseOrmFieldList" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="OivCTFusflsnZYE-OFXO-19">
+          <mxGeometry x="495" y="160" width="115" height="40" as="geometry" />
+        </mxCell>
         <mxCell id="OivCTFusflsnZYE-OFXO-23" value="orm" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="-63.75" y="1080" width="697.5" height="110" as="geometry" />
         </mxCell>
@@ -393,7 +399,7 @@
           <mxGeometry x="-280" y="1060" width="82.5" height="60" as="geometry" />
         </mxCell>
         <mxCell id="OivCTFusflsnZYE-OFXO-45" value="aggregateRootCache" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="235" y="990" width="185" height="40" as="geometry" />
+          <mxGeometry x="230" y="1000" width="185" height="40" as="geometry" />
         </mxCell>
         <mxCell id="OivCTFusflsnZYE-OFXO-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="OivCTFusflsnZYE-OFXO-30" target="OivCTFusflsnZYE-OFXO-45">
           <mxGeometry relative="1" as="geometry" />

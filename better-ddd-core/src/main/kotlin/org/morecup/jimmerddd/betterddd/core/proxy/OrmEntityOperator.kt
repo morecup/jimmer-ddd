@@ -39,10 +39,15 @@ object OrmEntityConstructorConfig {
 
 interface IOrmEntityConstructor {
     fun createInstanceList(ormEntityClassList: List<Class<*>>):List<Any>
+    fun createInstance(ormEntityClass: Class<*>): Any
 }
 class DefaultOrmEntityConstructor: IOrmEntityConstructor {
     override fun createInstanceList(ormEntityClassList: List<Class<*>>):List<Any> {
         println("createInstance: ormEntityClassList:$ormEntityClassList")
         return emptyList()
+    }
+    override fun createInstance(ormEntityClass: Class<*>): Any {
+        println("createInstance: ormEntityClass:$ormEntityClass")
+        return ormEntityClass.newInstance()
     }
 }
