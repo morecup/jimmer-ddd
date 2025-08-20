@@ -387,7 +387,7 @@ class TrackedAssociationList<T>(
     private val baseListOrmFieldList: List<String>,
     initialList: List<T>,
     baseList: List<Any>,
-    val elementAddListener: (Int,Any) -> Any
+    val elementAddListener: (Int,T) -> Any
 ) : MutableList<T> {
 
     private val domainEntityList = ArrayList<T>(initialList)
@@ -402,11 +402,11 @@ class TrackedAssociationList<T>(
 
     override fun contains(element: T): Boolean = domainEntityList.contains(element)
 
-    override fun iterator(): MutableIterator<T> = domainEntityList.iterator()
+    override fun iterator(): MutableIterator<T> = TrackedIterator(domainEntityList.iterator())
 
-    override fun listIterator(): MutableListIterator<T> = domainEntityList.listIterator()
+    override fun listIterator(): MutableListIterator<T> = TrackedListIterator(domainEntityList.listIterator())
 
-    override fun listIterator(index: Int): MutableListIterator<T> = domainEntityList.listIterator(index)
+    override fun listIterator(index: Int): MutableListIterator<T> = TrackedListIterator(domainEntityList.listIterator(index))
 
     override fun get(index: Int): T = domainEntityList[index]
 
@@ -416,6 +416,73 @@ class TrackedAssociationList<T>(
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
         return TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, domainEntityList.subList(fromIndex, toIndex), ormBaseList.subList(fromIndex, toIndex),elementAddListener)
+    }
+
+    // 自定义迭代器类，用于跟踪 remove 操作
+    private inner class TrackedIterator(private val iterator: MutableIterator<T>) : MutableIterator<T> by iterator {
+        private var lastReturnedIndex = -1
+        
+        override fun next(): T {
+            val element = iterator.next()
+            lastReturnedIndex = domainEntityList.indexOf(element)
+            return element
+        }
+        
+        override fun remove() {
+            iterator.remove()
+            if (lastReturnedIndex >= 0) {
+                // 通知ORM层移除关联关系
+                OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, ormBaseList[lastReturnedIndex])
+                ormBaseList.removeAt(lastReturnedIndex)
+                lastReturnedIndex = -1
+            }
+        }
+    }
+
+    // 自定义列表迭代器类，用于跟踪 remove/set/add 操作
+    private inner class TrackedListIterator(private val listIterator: MutableListIterator<T>) : MutableListIterator<T> by listIterator {
+        private var lastReturnedIndex = -1
+        
+        override fun next(): T {
+            val element = listIterator.next()
+            lastReturnedIndex = listIterator.previousIndex()
+            return element
+        }
+        
+        override fun previous(): T {
+            val element = listIterator.previous()
+            lastReturnedIndex = listIterator.nextIndex()
+            return element
+        }
+        
+        override fun remove() {
+            listIterator.remove()
+            if (lastReturnedIndex >= 0) {
+                // 通知ORM层移除关联关系
+                OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, ormBaseList[lastReturnedIndex])
+                ormBaseList.removeAt(lastReturnedIndex)
+                lastReturnedIndex = -1
+            }
+        }
+
+        override fun set(element: T) {
+            listIterator.set(element)
+            if (lastReturnedIndex >= 0) {
+                // 通知ORM层旧元素被替换
+                OrmEntityOperatorConfig.operator.removeElementFromEntityList(baseListOrmObj, baseListOrmFieldList, ormBaseList[lastReturnedIndex])
+                ormBaseList[lastReturnedIndex] = elementAddListener(lastReturnedIndex, element)
+            }
+        }
+
+        override fun add(element: T) {
+            val index = listIterator.nextIndex()
+            listIterator.add(element)
+            if (element != null) {
+                val baseOrmObj = elementAddListener(index, element)
+                ormBaseList.add(index, baseOrmObj)
+            }
+            lastReturnedIndex = -1
+        }
     }
 
     // 提取公共逻辑到私有方法
