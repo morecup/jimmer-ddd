@@ -7,9 +7,9 @@ import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
 @DomainEntity
 @OrmObject(["address","localAddress"])
 class BeijingAddress(
-    name: String,
-    detail: String,
-    @OrmField("localAddress.beijingAddressCode")
+    override var name: String,
+    override var detail: String,
+    @field: OrmField("localAddress:beijingAddressCode")
     var beijingAddressCode: String
 ) : Address(name,detail) {
     fun changeName(newName: String) {

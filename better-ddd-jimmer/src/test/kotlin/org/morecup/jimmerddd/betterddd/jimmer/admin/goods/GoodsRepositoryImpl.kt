@@ -12,6 +12,7 @@ import org.morecup.jimmerddd.betterddd.core.preanalysis.analysisMethodsCalledFie
 import org.morecup.jimmerddd.betterddd.core.proxy.DomainAggregateRoot
 import org.morecup.jimmerddd.betterddd.jimmer.domain.goods.Goods
 import org.morecup.jimmerddd.betterddd.jimmer.domain.goods.GoodsRepository
+import org.morecup.jimmerddd.betterddd.jimmer.proxy.DraftContextManager
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -21,7 +22,7 @@ open class GoodsRepositoryImpl(
     override fun saveGoods(goods: Goods) {
         val tempDraft = DomainAggregateRoot.findOrmObjs(goods)[0] as DraftSpi
         val changed = tempDraft.__resolve()
-        kSqlClient.save(changed, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.REPLACE)
+        kSqlClient.save(changed, SaveMode.NON_IDEMPOTENT_UPSERT, AssociatedSaveMode.VIOLENTLY_REPLACE)
         tempDraft.__draftContext().dispose()
         return
     }
@@ -61,10 +62,16 @@ open class GoodsRepositoryImpl(
             allTableFields()
             addressEntity {
                 allTableFields()
+                beijingAddress {
+                    allTableFields()
+                }
+                hubeiAddress {
+                    allTableFields()
+                }
             }
         }, id) ?: throw RuntimeException("Goods not found")
 //        goods-> proxy-> domain goods
-        val tempDraft = DraftContext(null).toDraftObject<Any>(goodsEntity).let { it as DraftSpi }
+        val tempDraft = DraftContextManager.getOrCreate().toDraftObject<Any>(goodsEntity).let { it as DraftSpi }
         val goods: Goods = DomainAggregateRoot.build(Goods::class.java, tempDraft)
         return goods
     }

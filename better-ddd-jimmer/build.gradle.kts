@@ -48,4 +48,5 @@ allOpen {
 
 noArg {
     annotation("org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot")
+    annotation("org.morecup.jimmerddd.betterddd.core.annotation.DomainEntity")
 }

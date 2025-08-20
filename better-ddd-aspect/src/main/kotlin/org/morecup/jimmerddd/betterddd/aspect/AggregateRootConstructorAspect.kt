@@ -10,7 +10,7 @@ import org.morecup.jimmerddd.betterddd.core.bridge.ConstructorBridgeConfig
 @Aspect
 class AggregateRootConstructorAspect {
 
-    @Pointcut("execution(*.new(..)) && @within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot)")
+    @Pointcut("execution(*.new(..)) && (@within(org.morecup.jimmerddd.betterddd.core.annotation.AggregateRoot) || @within(org.morecup.jimmerddd.betterddd.core.annotation.DomainEntity))")
     fun constructorOfAggregateRoot() {}
 
     @Before("constructorOfAggregateRoot()")

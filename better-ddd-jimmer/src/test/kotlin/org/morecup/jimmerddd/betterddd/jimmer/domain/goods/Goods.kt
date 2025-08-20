@@ -24,19 +24,22 @@ class Goods(
         baseColumnChoiceNames = ["base:beijingAddress","base:hubeiAddress"],
         baseColumnChoiceTypes = [BeijingAddress::class,HubeiAddress::class],
     )
-    var address:List<Address>,
+    var address: MutableList<Address>,
 ){
 
-    fun rename(newName: String) {
-        this.name = newName
-    }
+//    fun rename(newName: String) {
+//        this.name = newName
+//    }
 
     fun changeAddress(newAddress: String) {
-        this.nowAddress1 = newAddress
-        println(nowAddress1)
+//        this.nowAddress1 = newAddress
+//        println(nowAddress1)
         println(address.size)
-        address = address - HubeiAddress("hubeiAddress","2342","234324")
-        println(name)
+        val hubeiAddress = HubeiAddress("hubeiAddress", "2342", "234324")
+        address.add(hubeiAddress)
+        val beijingAddress = BeijingAddress("beijingAddress", "2342", "234324")
+        address.add(beijingAddress)
+//        println(name)
 //        address[0].detail = "haha"
 //        if (address[0] is BeijingAddress){
 //            (address[0] as BeijingAddress).beijingAddressCode = "change1"

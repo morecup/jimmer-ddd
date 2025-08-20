@@ -146,10 +146,10 @@ class DomainAggregateRootField: IFieldBridge {
                         // 创建一个新的ORM对象
                         OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
                     }
-                    if (index >0){
-                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
+                    if (index >=0){
+                        OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index,baseOrmObj)
                     }else{
-                        OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
                     }
 
                     withIndexCustomNames.forEach {
@@ -187,7 +187,7 @@ class DomainAggregateRootField: IFieldBridge {
                         throw RuntimeException("映射出来的是null,$field")
                     }
                     val choiceOrmObjs = polyListOrmFields.baseColumnChoiceNames.map {
-                        OrmEntityOperatorConfig.operator.getEntityField(baseOrmEntity, it.split("."))
+                        OrmEntityOperatorConfig.operator.getEntityField(baseOrmEntity, it.replace("base:", "").split("."))
                     }
                     val chosenType = polyListOrmFields.columnChoiceRule.java.newInstance().choice(choiceOrmObjs,polyListOrmFields.baseColumnChoiceTypes.toList())
 
@@ -241,10 +241,10 @@ class DomainAggregateRootField: IFieldBridge {
                         // 创建一个新的ORM对象
                         OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
                     }
-                    if (index >0){
-                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
-                    }else{
+                    if (index >=0){
                         OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+                    }else{
+                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
                     }
 
                     withIndexCustomNames.forEach {

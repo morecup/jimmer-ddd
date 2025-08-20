@@ -1,7 +1,9 @@
 package org.morecup.jimmerddd.betterddd.jimmer.admin.goods
 
+import org.babyfish.jimmer.sql.DissociateAction
 import org.babyfish.jimmer.sql.Entity
 import org.babyfish.jimmer.sql.ManyToOne
+import org.babyfish.jimmer.sql.OnDissociate
 import org.babyfish.jimmer.sql.OneToOne
 import org.babyfish.jimmer.sql.Table
 import org.morecup.jimmerddd.betterddd.jimmer.admin.BaseEntity
@@ -19,5 +21,6 @@ interface AddressEntity:BaseEntity {
     val hubeiAddress:HubeiAddressEntity?
 
     @ManyToOne
+    @OnDissociate(DissociateAction.DELETE)
     val goodsEntity:GoodsEntity
 }

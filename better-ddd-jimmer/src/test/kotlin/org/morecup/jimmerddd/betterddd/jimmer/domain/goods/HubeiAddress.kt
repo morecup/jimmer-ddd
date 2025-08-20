@@ -9,7 +9,7 @@ import org.morecup.jimmerddd.betterddd.core.annotation.OrmObject
 class HubeiAddress(
     override var name: String,
     override var detail: String,
-    @OrmField("localAddress.hubeiAddressCode")
+    @field: OrmField("localAddress:hubeiAddressCode")
     var hubeiAddressCode: String
 ) : Address(name, detail) {
 }

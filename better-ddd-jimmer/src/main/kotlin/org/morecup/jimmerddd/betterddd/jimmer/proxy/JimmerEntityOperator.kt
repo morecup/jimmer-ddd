@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 class JimmerEntityOperator: IOrmEntityOperator {
     override fun getEntityField(entity: Any, fieldList: List<String>): Any? {
         // 如果fieldList是空的，直接返回entity
-        if (fieldList.isEmpty()){
+        if (fieldList.isEmpty()||(fieldList.size == 1 && fieldList[0].isBlank())){
             return entity
         }
         var draft = entity as DraftSpi
@@ -59,13 +59,13 @@ class JimmerEntityConstructor: IOrmEntityConstructor {
     override fun createInstanceList(ormEntityClassList: List<Class<*>>):List<Any> {
         val jimmerDraftList = ormEntityClassList.map {
             val type = ImmutableType.get(it)
-            type.draftFactory.apply(DraftContext(null), null)
+            type.draftFactory.apply(DraftContextManager.getOrCreate(), null)
         }
         return jimmerDraftList
     }
 
     override fun createInstance(ormEntityClass: Class<*>): Any {
         val type = ImmutableType.get(ormEntityClass)
-        return type.draftFactory.apply(DraftContext(null), null)
+        return type.draftFactory.apply(DraftContextManager.getOrCreate(), null)
     }
 }
