@@ -98,8 +98,8 @@ class DomainAggregateRootField: IFieldBridge {
                 DomainAggregateRoot.build(field.type, *ormObjects.toTypedArray())
             }
             listOrmFields!= null -> {
-                val (entityValue, entityFieldList) = resolveEntityAndField(listOrmFields.baseListName, objectNames, objects)
-                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList) as List<Any>
+                val (baseListOrmObj, baseListOrmFieldList) = resolveEntityAndField(listOrmFields.baseListName, objectNames, objects)
+                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList) as List<Any>
                 val mappedList = baseListOrmEntity.map { baseOrmEntity ->
                     if (baseOrmEntity == null) {
                         throw RuntimeException("映射出来的是null,$field")
@@ -122,8 +122,44 @@ class DomainAggregateRootField: IFieldBridge {
                     }
                     DomainAggregateRoot.build(field.type, *ormObjects.toTypedArray())
                 }
+
+                val withIndexCustomNames = listOrmFields.columnNames.withIndex()
+                    .filter { it.value.contains("base:") }
+                    .sortedBy { it.value.length }
+                    .map { IndexedValue(it.index, it.value.substringAfter("base:")) }
                 // 使用可追踪的List实现，以便在添加/删除元素时通知ORM层
-                TrackedAssociationList(entityValue, entityFieldList, mappedList,baseListOrmEntity,listOrmFields.columnNames)
+                TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, mappedList,baseListOrmEntity)
+                { index,addedDomainEntity ->
+                    val ormObjs = DomainAggregateRoot.findOrmObjs(addedDomainEntity)
+                    // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
+                    val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
+                    val baseOrmObj = if (emptyNameIndex != -1) {
+                        ormObjs[emptyNameIndex]
+                    } else {
+                        // 创建一个新的ORM对象
+                        // 这里假设使用第一个ORM对象的类型来创建新实例
+                        // 实际实现可能需要根据具体业务需求调整
+                        val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
+                        // 获取list内实际的泛型
+                        val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
+                        val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
+                        // 创建一个新的ORM对象
+                        OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
+                    }
+                    if (index >0){
+                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
+                    }else{
+                        OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+                    }
+
+                    withIndexCustomNames.forEach {
+                        if (it.value.isNotBlank()){
+                            OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
+                        }
+                    }
+
+                    baseOrmObj
+                }
             }
             polyOrmFields != null -> {
                 val choiceOrmObjs = polyOrmFields.columnChoiceNames.map {
@@ -306,18 +342,13 @@ class TrackedAssociationList<T>(
     private val baseListOrmFieldList: List<String>,
     initialList: List<T>,
     baseList: List<Any>,
-    val customNames: Array<String>
+    val elementAddListener: (Int,Any) -> Any
 ) : MutableList<T> {
 
     private val domainEntityList = ArrayList<T>(initialList)
 
     private val ormBaseList = ArrayList<Any>(baseList)
 
-    //将customNames过滤掉不含有base:的，并且保留原来的索引，并且按照名称的长度，从小到大排列
-    private val withIndexCustomNames = customNames.withIndex()
-        .filter { it.value.contains("base:") }
-        .sortedBy { it.value.length }
-        .map { IndexedValue(it.index, it.value.substringAfter("base:")) }
 
     override val size: Int
         get() = domainEntityList.size
@@ -339,48 +370,24 @@ class TrackedAssociationList<T>(
     override fun lastIndexOf(element: T): Int = domainEntityList.lastIndexOf(element)
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
-        return TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, domainEntityList.subList(fromIndex, toIndex), ormBaseList.subList(fromIndex, toIndex),customNames)
+        return TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, domainEntityList.subList(fromIndex, toIndex), ormBaseList.subList(fromIndex, toIndex),elementAddListener)
     }
 
     // 提取公共逻辑到私有方法
-    private fun addElementToBackend(element: T): Any? {
-        if (element == null) return null
-        
-        val ormObjs = DomainAggregateRoot.findOrmObjs(element)
-        // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
-        val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
-        val baseOrmObj = if (emptyNameIndex != -1) {
-            ormObjs[emptyNameIndex]
-        } else {
-            // 创建一个新的ORM对象
-            // 这里假设使用第一个ORM对象的类型来创建新实例
-            // 实际实现可能需要根据具体业务需求调整
-            val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
-            // 获取list内实际的泛型
-            val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
-            val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
-            // 创建一个新的ORM对象
-            OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
-        }
+    private fun addElementToBackend(element: T,index:Int = -1): Any? {
+        if (element == null) throw RuntimeException("不可添加空元素！")
+
+        val baseOrmObj = elementAddListener(index,element)
 
         ormBaseList.add(baseOrmObj)
-        
-        withIndexCustomNames.forEach {
-            if (it.value.isNotBlank()){
-                OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
-            }
-        }
-        
+
         return baseOrmObj
     }
 
     override fun add(element: T): Boolean {
         val result = domainEntityList.add(element)
         if (result && element != null) {
-            val baseOrmObj = addElementToBackend(element)
-            if (baseOrmObj != null) {
-                OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
-            }
+            addElementToBackend(element)
         }
         return result
     }
@@ -388,10 +395,7 @@ class TrackedAssociationList<T>(
     override fun add(index: Int, element: T) {
         domainEntityList.add(index, element)
         if (element != null) {
-            val baseOrmObj = addElementToBackend(element)
-            if (baseOrmObj != null) {
-                OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
-            }
+            addElementToBackend(element,index)
         }
     }
 
@@ -475,10 +479,7 @@ class TrackedAssociationList<T>(
         }
         // 通知ORM层新元素被添加
         if (element != null) {
-            val baseOrmObj = addElementToBackend(element)
-            if (baseOrmObj != null) {
-                OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
-            }
+            addElementToBackend(element,index)
         }
         return oldElement
     }
