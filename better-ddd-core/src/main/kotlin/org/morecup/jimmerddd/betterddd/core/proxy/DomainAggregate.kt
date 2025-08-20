@@ -180,9 +180,9 @@ class DomainAggregateRootField: IFieldBridge {
                 DomainAggregateRoot.build(chosenType.java, *ormObjects.toTypedArray())
             }
             polyListOrmFields != null -> {
-                val (entityValue, entityFieldList) = resolveEntityAndField(polyListOrmFields.baseListName, objectNames, objects)
-                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(entityValue, entityFieldList) as List<*>
-                baseListOrmEntity.map { baseOrmEntity ->
+                val (baseListOrmObj, baseListOrmFieldList) = resolveEntityAndField(polyListOrmFields.baseListName, objectNames, objects)
+                val baseListOrmEntity = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList) as List<Any>
+                val mappedList = baseListOrmEntity.map { baseOrmEntity ->
                     if (baseOrmEntity == null) {
                         throw RuntimeException("映射出来的是null,$field")
                     }
@@ -209,6 +209,51 @@ class DomainAggregateRootField: IFieldBridge {
                         }
                     }
                     DomainAggregateRoot.build(chosenType.java, *ormObjects.toTypedArray())
+                }
+                // 使用可追踪的List实现，以便在添加/删除元素时通知ORM层
+                TrackedAssociationList(baseListOrmObj, baseListOrmFieldList, mappedList,baseListOrmEntity)
+                { index,addedDomainEntity ->
+                    val ormObjs = DomainAggregateRoot.findOrmObjs(addedDomainEntity)
+                    // 先查找withIndexCustomNames中是否存在空字符串，如果存在，则获取对应ormobj 添加到ormBaseList中，如果不存在，则创建一个rmobj，添加到ormBaseList中
+                    val choiceTypeIndex = polyListOrmFields.baseColumnChoiceTypes.indexOf(addedDomainEntity::class)
+                    if (choiceTypeIndex < 0){
+                        throw RuntimeException("没有找到对应的choiceType")
+                    }
+                    val withIndexCustomNames = polyListOrmFields.columnNames.mapIndexedNotNull { index,value ->
+                        val columnName = value.columnName.ifEmpty { value.columnChoiceNames[value.columnChoiceTypes.indexOf(addedDomainEntity::class)] }
+                        if (columnName.contains("base:")) {
+                            IndexedValue(index,columnName.replace("base:", ""))
+                        } else {
+                            null
+                        }
+                    }.sortedBy { it.value.length }
+                    val emptyNameIndex = withIndexCustomNames.indexOfFirst { it.value.isEmpty() }
+                    val baseOrmObj = if (emptyNameIndex != -1) {
+                        ormObjs[emptyNameIndex]
+                    } else {
+                        // 创建一个新的ORM对象
+                        // 这里假设使用第一个ORM对象的类型来创建新实例
+                        // 实际实现可能需要根据具体业务需求调整
+                        val baseListOrm = OrmEntityOperatorConfig.operator.getEntityField(baseListOrmObj, baseListOrmFieldList)  as List<Any>
+                        // 获取list内实际的泛型
+                        val baseListOrmType = baseListOrm.javaClass.genericSuperclass as ParameterizedType
+                        val baseListOrmGenericType = baseListOrmType.actualTypeArguments[0]
+                        // 创建一个新的ORM对象
+                        OrmEntityConstructorConfig.constructor.createInstance(baseListOrmGenericType as Class<*>)
+                    }
+                    if (index >0){
+                        OrmEntityOperatorConfig.operator.addElementToEntityList(baseListOrmObj, baseListOrmFieldList, baseOrmObj)
+                    }else{
+                        OrmEntityOperatorConfig.operator.addElementToEntityListAt(baseListOrmObj, baseListOrmFieldList, index, baseOrmObj)
+                    }
+
+                    withIndexCustomNames.forEach {
+                        if (it.value.isNotBlank()){
+                            OrmEntityOperatorConfig.operator.setEntityField(baseOrmObj, it.value.split("."), ormObjs[it.index])
+                        }
+                    }
+
+                    baseOrmObj
                 }
             }
             else -> {
